@@ -15,7 +15,7 @@ class AuthService {
 
   AuthService(String user);
 
-  // 🔐 Inicia sesión y guarda el token si es exitoso
+  //* 🔐 Inicia sesión y guarda el token si es exitoso
   Future<bool> login(String username, String password) async {
     print('[AuthService] 🚀 INICIANDO LOGIN DEBUG');
     print('[AuthService] 📡 URL: $_loginUrl');
@@ -52,7 +52,7 @@ class AuthService {
           final token = data['token'];
           final prefs = await SharedPreferences.getInstance();
 
-          // Guardar token y datos del usuario
+          //* Guardar token y datos del usuario
           await prefs.setString(_tokenKey, token);
           await prefs.setString(_userDataKey, jsonEncode(data));
 
@@ -76,7 +76,7 @@ class AuthService {
     }
   }
 
-  // 🔓 Cierra sesión limpiando datos locales
+  //* 🔓 Cierra sesión limpiando datos locales
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
@@ -84,7 +84,7 @@ class AuthService {
     print('[AuthService] 🚪 Sesión cerrada - datos eliminados');
   }
 
-  // 🔍 Verifica si hay una sesión activa
+  //* 🔍 Verifica si hay una sesión activa
   Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(_tokenKey);
@@ -93,7 +93,7 @@ class AuthService {
     return isLogged;
   }
 
-  // 👤 Obtiene los datos del usuario autenticado
+  //* 👤 Obtiene los datos del usuario autenticado
   Future<Map<String, dynamic>?> getUserData() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_userDataKey);
@@ -106,7 +106,7 @@ class AuthService {
     return null;
   }
 
-  // 📦 Obtiene el token JWT almacenado
+  //* 📦 Obtiene el token JWT almacenado
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(_tokenKey);

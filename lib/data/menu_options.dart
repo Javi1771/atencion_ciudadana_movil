@@ -1,6 +1,6 @@
 // lib/data/menu_options.dart
 
-/// Opciones para menús desplegables
+///? Opciones para menús desplegables
 class MenuOptions {
   static const List<String> colonias = [
     'Alejandrina',

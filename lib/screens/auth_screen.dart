@@ -25,7 +25,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false;
   String? _loginError;
 
-  // Nueva paleta de colores inspirada en Pinterest
+  //* Nueva paleta de colores 
   static const Color primaryColor = Color(0xFF71079C);
   static const Color backgroundLight = Color(0xFFF9F9F9);
   static const Color cardBackground = Color(0xFFFFFFFF);
@@ -45,7 +45,7 @@ class _AuthScreenState extends State<AuthScreen> {
   void _testRFCValidation() {
     debugPrint('\n=== INICIO DE PRUEBAS DE VALIDACIÓN ===');
 
-    // Prueba del RFC especial
+    //* Prueba del RFC especial
     const specialRFC = 'ORG1213456789';
     final result = RFCTestHelper.analyzeRFC(specialRFC);
     debugPrint('RFC especial: $specialRFC');
@@ -53,7 +53,7 @@ class _AuthScreenState extends State<AuthScreen> {
     debugPrint('Es excepción: ${result['isExcepcion']}');
     debugPrint('Tipo: ${result['type']}');
 
-    // Ejecutar pruebas del helper
+    //* Ejecutar pruebas del helper
     RFCTestHelper.testRFCValidation();
   }
 
@@ -69,7 +69,7 @@ class _AuthScreenState extends State<AuthScreen> {
       debugPrint('\n🔍 Validando input: "$input" (${input.length} chars)');
     }
 
-    // Validación de email
+    //* Validación de email
     if (input.contains('@')) {
       final emailRegex = RegExp(
         r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
@@ -81,7 +81,7 @@ class _AuthScreenState extends State<AuthScreen> {
       return 'Formato de email incorrecto';
     }
 
-    // Validación de CURP
+    //* Validación de CURP
     if (inputUpper.length == 18) {
       final curpRegex = RegExp(r'^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[A-Z0-9][0-9]$');
       if (curpRegex.hasMatch(inputUpper)) {
@@ -91,13 +91,13 @@ class _AuthScreenState extends State<AuthScreen> {
       return 'Formato de CURP incorrecto';
     }
 
-    // Validación especial para RFC de excepción (comparación exacta)
+    //* Validación especial para RFC de excepción (comparación exacta)
     if (inputUpper == 'ORG1213456789') {
       debugPrint('✅ RFC de excepción aceptado exactamente');
       return null;
     }
 
-    // Validación estándar de RFC para otros casos
+    //* Validación estándar de RFC para otros casos
     if (inputUpper.length >= 9 && inputUpper.length <= 13) {
       final rfcAnalysis = RFCTestHelper.analyzeRFC(inputUpper);
 
@@ -154,7 +154,7 @@ class _AuthScreenState extends State<AuthScreen> {
         return;
       }
 
-      // Obtener datos almacenados tras el login
+      //* Obtener datos almacenados tras el login
       final userData = await authService.getUserData();
       if (userData == null) {
         _showError('Error al leer los datos de usuario. Intenta de nuevo.');
@@ -163,12 +163,12 @@ class _AuthScreenState extends State<AuthScreen> {
 
       final usuario = UsuarioCUS.fromJson(userData);
 
-      // 🚨 ALERTA: Usuario no admitido
+      //! 🚨 ALERTA: Usuario no admitido
       if (usuario.tipoPerfil != TipoPerfilCUS.trabajador) {
-        // 1) Detenemos el loading
+        //! 1) Detenemos el loading
         if (mounted) setState(() => _isLoading = false);
 
-        // 2) PostFrame para que ScaffoldMessenger tenga un contexto válido
+        //! 2) PostFrame para que ScaffoldMessenger tenga un contexto válido
         WidgetsBinding.instance.addPostFrameCallback((_) {
           AlertHelper.showAlert(
             'Acceso restringido\n'
@@ -181,7 +181,7 @@ class _AuthScreenState extends State<AuthScreen> {
         return;
       }
 
-      // ALERTA MEJORADA: Bienvenida personalizada
+      //* ALERTA MEJORADA: Bienvenida personalizada
       AlertHelper.showAlert(
         '¡Bienvenido ${usuario.nombre.split(" ")[0]}!',
         type: AlertType.success,
@@ -192,7 +192,7 @@ class _AuthScreenState extends State<AuthScreen> {
         Navigator.pushReplacementNamed(context, '/home');
       });
     } on SocketException {
-      // ALERTA MEJORADA: Sin conexión
+      //? ALERTA MEJORADA: Sin conexión
       AlertHelper.showAlert(
         '🔌 Sin conexión a internet\n'
         'Verifica tu conexión e intenta nuevamente',
@@ -201,7 +201,7 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (e, st) {
       debugPrint('❌ Error en login: $e\n$st');
 
-      // ALERTA MEJORADA: Error inesperado
+      //! ALERTA MEJORADA: Error inesperado
       AlertHelper.showAlert(
         '⚠️ Error inesperado\n'
         'Por favor intenta nuevamente más tarde',
@@ -218,7 +218,7 @@ class _AuthScreenState extends State<AuthScreen> {
       _isLoading = false;
     });
 
-    // ALERTA MEJORADA: Credenciales incorrectas
+    //! ALERTA MEJORADA: Credenciales incorrectas
     AlertHelper.showAlert(
       '🔐 Credenciales incorrectas\n$message',
       type: AlertType.error,
@@ -249,7 +249,7 @@ class _AuthScreenState extends State<AuthScreen> {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       }
     } catch (e) {
-      // ALERTA MEJORADA: Error en enlace
+      //! ALERTA MEJORADA: Error en enlace
       AlertHelper.showAlert(
         '❌ No se pudo abrir el enlace\n'
         'Verifica tu conexión a internet',
@@ -264,26 +264,26 @@ class _AuthScreenState extends State<AuthScreen> {
       backgroundColor: backgroundLight,
       body: Stack(
         children: [
-          // Fondo estilo Pinterest con mosaico de colores
+          //* Fondo con mosaico de colores
           _buildPinterestBackground(),
 
-          // Contenido principal
+          //* Contenido principal
           SingleChildScrollView(
             child: Column(
               children: [
                 const SizedBox(height: 80),
 
-                // Logo y título
+                //* Logo y título
                 _buildHeader(),
 
                 const SizedBox(height: 40),
 
-                // Formulario de login
+                //* Formulario de login
                 _buildLoginCard(),
 
                 const SizedBox(height: 30),
 
-                // Botón de sin conexión
+                //* Botón de sin conexión
                 _buildOfflineButton(),
               ],
             ),
@@ -323,7 +323,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        // Logo Pinterest-style
+        //* Logo 
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -375,7 +375,7 @@ class _AuthScreenState extends State<AuthScreen> {
         key: _formKey,
         child: Column(
           children: [
-            // Campo de usuario
+            //* Campo de usuario
             _buildInputField(
               controller: userCtrl,
               label: 'Correo, CURP o RFC',
@@ -386,12 +386,12 @@ class _AuthScreenState extends State<AuthScreen> {
 
             const SizedBox(height: 20),
 
-            // Campo de contraseña
+            //* Campo de contraseña
             _buildPasswordField(),
 
             const SizedBox(height: 10),
 
-            // Enlace de recuperación de contraseña
+            //* Enlace de recuperación de contraseña
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -405,7 +405,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
             const SizedBox(height: 20),
 
-            // Botón de inicio de sesión
+            //* Botón de inicio de sesión
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -435,7 +435,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             ),
 
-            // Mensaje de error mejorado
+            // !Mensaje de error mejorado
             if (_loginError != null)
               Padding(
                 padding: const EdgeInsets.only(top: 16),
@@ -584,7 +584,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 backgroundColor: Colors.white,
               ),
               child: Text(
-                'Continuar sin conexión',
+                'Continuar registro sin conexión',
                 style: TextStyle(
                   color: Theme.of(context).primaryColor,
                   fontWeight: FontWeight.w600,

@@ -111,10 +111,12 @@ class _IncidenceFormScreenState extends State<IncidenceFormScreen>
     return null;
   }
 
+  //? 1) En _validateCurrentStep, permite CURP vacía en el paso 0:
   Future<bool> _validateCurrentStep() async {
     switch (_currentStep) {
       case 0:
-        return _validateCurp(_curpCtrl.text) == null;
+        //! Ya no validamos la CURP aquí: siempre devolvemos true
+        return true;
       case 1:
         return _colonia != null && _direccionCtrl.text.trim().isNotEmpty;
       case 2:
@@ -129,8 +131,17 @@ class _IncidenceFormScreenState extends State<IncidenceFormScreen>
     }
   }
 
+  //? 2) En _nextStep(), detecta si vamos del paso 0 al 1 sin CURP y avisa:
   void _nextStep() async {
     if (await _validateCurrentStep()) {
+      //! Si estamos en el paso 0 y la CURP está vacía, lanzamos un warning informativo
+      if (_currentStep == 0 && _curpCtrl.text.trim().isEmpty) {
+        AlertHelper.showAlert(
+          'No ingresaste CURP. Este registro no podrá subirse al sistema real sin CURP.',
+          type: AlertType.warning,
+        );
+      }
+
       if (_currentStep < 2) {
         _stepAnimationController.reset();
         setState(() => _currentStep++);
@@ -157,7 +168,7 @@ class _IncidenceFormScreenState extends State<IncidenceFormScreen>
 
     switch (_currentStep) {
       case 0:
-        message = _validateCurp(_curpCtrl.text) ?? '';
+        message = '';
         break;
       case 1:
         message =

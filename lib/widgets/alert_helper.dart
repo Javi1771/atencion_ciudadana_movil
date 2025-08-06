@@ -33,10 +33,10 @@ class AlertHelper {
 
     final snackBar = SnackBar(
       behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       backgroundColor: backgroundColor,
-      elevation: 6,
+      elevation: 15,
       duration: duration,
       content: Row(
         children: [

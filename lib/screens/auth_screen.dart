@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '/services/auth_service.dart';
 import '/utils/rfc_test_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -19,13 +20,14 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
+  bool _rememberMe = false;
   final TextEditingController userCtrl = TextEditingController();
   final TextEditingController passCtrl = TextEditingController();
   bool obscureText = true;
   bool _isLoading = false;
   String? _loginError;
 
-  //* Nueva paleta de colores 
+  //* Nueva paleta de colores
   static const Color primaryColor = Color(0xFF71079C);
   static const Color backgroundLight = Color(0xFFF9F9F9);
   static const Color cardBackground = Color(0xFFFFFFFF);
@@ -35,11 +37,23 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   void initState() {
     super.initState();
+    _loadSavedCredentials();
+
     if (kDebugMode) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _testRFCValidation();
       });
     }
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final remember = prefs.getBool('remember_me') ?? false;
+    if (remember) {
+      userCtrl.text = prefs.getString('saved_user') ?? '';
+      passCtrl.text = prefs.getString('saved_pass') ?? '';
+    }
+    setState(() => _rememberMe = remember);
   }
 
   void _testRFCValidation() {
@@ -121,7 +135,7 @@ class _AuthScreenState extends State<AuthScreen> {
     }
 
     if (kDebugMode) debugPrint('❌ Formato no reconocido');
-    return 'Ingresa un correo, CURP (18 chars) o RFC (9-13 chars) válido';
+    return 'Ingresa un correo, CURP (18 chars)';
   }
 
   String? _validatePassword(String? value) {
@@ -165,14 +179,11 @@ class _AuthScreenState extends State<AuthScreen> {
 
       //! 🚨 ALERTA: Usuario no admitido
       if (usuario.tipoPerfil != TipoPerfilCUS.trabajador) {
-        //! 1) Detenemos el loading
         if (mounted) setState(() => _isLoading = false);
-
-        //! 2) PostFrame para que ScaffoldMessenger tenga un contexto válido
         WidgetsBinding.instance.addPostFrameCallback((_) {
           AlertHelper.showAlert(
             'Acceso restringido\n'
-            'Tu cuenta no tiene permisos para acceder a esta aplicación. \n'
+            'Tu cuenta no tiene permisos para acceder a esta aplicación. '
             'Solo personal autorizado puede ingresar.',
             type: AlertType.error,
             duration: const Duration(seconds: 5),
@@ -183,28 +194,35 @@ class _AuthScreenState extends State<AuthScreen> {
 
       //* ALERTA MEJORADA: Bienvenida personalizada
       AlertHelper.showAlert(
-        '¡Bienvenido ${usuario.nombre.split(" ")[0]}!',
+        '¡Bienvenido!',
         type: AlertType.success,
         duration: const Duration(seconds: 3),
       );
+
+      // → Aquí guardamos o borramos credenciales según el checkbox
+      final prefs = await SharedPreferences.getInstance();
+      if (_rememberMe) {
+        await prefs.setBool('remember_me', true);
+        await prefs.setString('saved_user', user);
+        await prefs.setString('saved_pass', pass);
+      } else {
+        await prefs.remove('remember_me');
+        await prefs.remove('saved_user');
+        await prefs.remove('saved_pass');
+      }
 
       Future.delayed(const Duration(milliseconds: 1800), () {
         Navigator.pushReplacementNamed(context, '/home');
       });
     } on SocketException {
-      //? ALERTA MEJORADA: Sin conexión
       AlertHelper.showAlert(
-        '🔌 Sin conexión a internet\n'
-        'Verifica tu conexión e intenta nuevamente',
+        '🔌 Sin conexión a internet\nVerifica tu conexión e intenta nuevamente',
         type: AlertType.warning,
       );
     } catch (e, st) {
       debugPrint('❌ Error en login: $e\n$st');
-
-      //! ALERTA MEJORADA: Error inesperado
       AlertHelper.showAlert(
-        '⚠️ Error inesperado\n'
-        'Por favor intenta nuevamente más tarde',
+        '⚠️ Error inesperado\nPor favor intenta nuevamente más tarde',
         type: AlertType.error,
       );
     } finally {
@@ -271,17 +289,17 @@ class _AuthScreenState extends State<AuthScreen> {
           SingleChildScrollView(
             child: Column(
               children: [
-                const SizedBox(height: 80),
+                const SizedBox(height: 65),
 
                 //* Logo y título
                 _buildHeader(),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 35),
 
                 //* Formulario de login
                 _buildLoginCard(),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
 
                 //* Botón de sin conexión
                 _buildOfflineButton(),
@@ -323,14 +341,18 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        //* Logo 
+        //* Logo
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: primaryColor,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.lock_outlined, color: Colors.white, size: 36),
+          child: const Icon(
+            Icons.account_circle,
+            color: Colors.white,
+            size: 36,
+          ),
         ),
 
         const SizedBox(height: 20),
@@ -378,8 +400,8 @@ class _AuthScreenState extends State<AuthScreen> {
             //* Campo de usuario
             _buildInputField(
               controller: userCtrl,
-              label: 'Correo, CURP o RFC',
-              hint: 'usuario@ejemplo.com / CURP / RFC',
+              label: 'Correo o CURP',
+              hint: 'usuario@ejemplo.com / CURP',
               icon: Icons.person_outline,
               validator: _validateEmailCurpOrRfc,
             ),
@@ -390,6 +412,18 @@ class _AuthScreenState extends State<AuthScreen> {
             _buildPasswordField(),
 
             const SizedBox(height: 10),
+            Row(
+              children: [
+                Checkbox(
+                  value: _rememberMe,
+                  onChanged: (v) => setState(() => _rememberMe = v ?? false),
+                  activeColor: primaryColor,
+                ),
+                const Text('Recuérdame en este dispositivo'),
+              ],
+            ),
+
+            const SizedBox(height: 5),
 
             //* Enlace de recuperación de contraseña
             Align(
@@ -403,12 +437,12 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 7),
 
             //* Botón de inicio de sesión
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 45,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleLogin,
                 style: ElevatedButton.styleFrom(
@@ -565,12 +599,12 @@ class _AuthScreenState extends State<AuthScreen> {
       child: Column(
         children: [
           const Divider(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 10),
           const Text(
             '¿Prefieres continuar sin iniciar sesión?',
             style: TextStyle(color: textLight, fontSize: 15),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 15),
           SizedBox(
             width: double.infinity,
             height: 50,

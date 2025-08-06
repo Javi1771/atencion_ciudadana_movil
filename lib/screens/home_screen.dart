@@ -319,7 +319,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   alignment: Alignment.center,
                   children: [
                     Icon(
-                      hasPending ? Icons.cloud_upload : Icons.check_circle,
+                      hasPending ? Icons.info : Icons.check_circle,
                       color: hasPending ? primary : success,
                       size: 32,
                     ),
@@ -479,7 +479,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     color: primary.withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.storage, color: primary, size: 28),
+                  child: Icon(Icons.fact_check, color: primary, size: 28),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

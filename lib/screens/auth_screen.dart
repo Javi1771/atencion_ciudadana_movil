@@ -46,6 +46,29 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  ///! Verifica conexión real a internet en ~3s.
+  ///! Evita falsos positivos (WiFi sin salida) abriendo un socket a 443.
+  Future<bool> _hasInternet({
+    Duration timeout = const Duration(seconds: 3),
+  }) async {
+    try {
+      final result = await InternetAddress.lookup(
+        'clients3.google.com',
+      ).timeout(timeout);
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        //* Probar salida a internet (puerto 443)
+        final socket = await Socket.connect(result[0], 443, timeout: timeout);
+        socket.destroy();
+        return true;
+      }
+    } on SocketException {
+      //! sin red o sin salida
+    } on Exception {
+      //! timeouts u otros
+    }
+    return false;
+  }
+
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     final remember = prefs.getBool('remember_me') ?? false;
@@ -151,6 +174,16 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
+    //! 🔒 Bloqueo previo si no hay internet
+    if (!await _hasInternet()) {
+      AlertHelper.showAlert(
+        'Sin conexión a internet\nActiva tus datos o Wi-Fi para iniciar sesión.',
+        type: AlertType.warning,
+        duration: const Duration(seconds: 4),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _loginError = null;
@@ -199,7 +232,7 @@ class _AuthScreenState extends State<AuthScreen> {
         duration: const Duration(seconds: 3),
       );
 
-      // → Aquí guardamos o borramos credenciales según el checkbox
+      //? → Aquí guardamos o borramos credenciales según el checkbox
       final prefs = await SharedPreferences.getInstance();
       if (_rememberMe) {
         await prefs.setBool('remember_me', true);
@@ -216,13 +249,13 @@ class _AuthScreenState extends State<AuthScreen> {
       });
     } on SocketException {
       AlertHelper.showAlert(
-        '🔌 Sin conexión a internet\nVerifica tu conexión e intenta nuevamente',
+        'Sin conexión a internet\nVerifica tu conexión e intenta nuevamente',
         type: AlertType.warning,
       );
     } catch (e, st) {
       debugPrint('❌ Error en login: $e\n$st');
       AlertHelper.showAlert(
-        '⚠️ Error inesperado\nPor favor intenta nuevamente más tarde',
+        'Error inesperado\nPor favor intenta nuevamente más tarde',
         type: AlertType.error,
       );
     } finally {
@@ -238,7 +271,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
     //! ALERTA MEJORADA: Credenciales incorrectas
     AlertHelper.showAlert(
-      '🔐 Credenciales incorrectas\n$message',
+      'Credenciales incorrectas\n$message',
       type: AlertType.error,
     );
   }
@@ -269,7 +302,7 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (e) {
       //! ALERTA MEJORADA: Error en enlace
       AlertHelper.showAlert(
-        '❌ No se pudo abrir el enlace\n'
+        'No se pudo abrir el enlace\n'
         'Verifica tu conexión a internet',
         type: AlertType.error,
       );
@@ -444,7 +477,19 @@ class _AuthScreenState extends State<AuthScreen> {
               width: double.infinity,
               height: 45,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
+                onPressed:
+                    _isLoading
+                        ? null
+                        : () async {
+                          if (!await _hasInternet()) {
+                            AlertHelper.showAlert(
+                              'Sin conexión a internet\nActiva tus datos o Wi-Fi para iniciar sesión.',
+                              type: AlertType.warning,
+                            );
+                            return;
+                          }
+                          _handleLogin();
+                        },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,

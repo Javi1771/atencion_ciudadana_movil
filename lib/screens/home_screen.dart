@@ -144,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         AlertHelper.showAlert(msg, type: AlertType.error);
       }
     } catch (e) {
-      AlertHelper.showAlert('Error de red: $e', type: AlertType.error);
+      AlertHelper.showAlert('Error de red: Revisa tu conexión a internet o a datos móviles', type: AlertType.error);
       debugPrint('🚨 Upload error: $e');
     } finally {
       setState(() => _isUploading = false);
@@ -177,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         type: AlertType.success,
       );
     } catch (e) {
-      AlertHelper.showAlert('Error al actualizar: $e', type: AlertType.error);
+      AlertHelper.showAlert('Error al actualizar', type: AlertType.error);
     }
   }
 

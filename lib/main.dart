@@ -1,8 +1,8 @@
-import 'package:atencion_ciudadana/widgets/alert_helper.dart';
+import 'package:app_atencion_ciudadana/widgets/alert_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:atencion_ciudadana/services/connectivity_service.dart';
-import 'package:atencion_ciudadana/routes/routes.dart';
+import 'package:app_atencion_ciudadana/services/connectivity_service.dart';
+import 'package:app_atencion_ciudadana/routes/routes.dart';
 
 void main() {
   runApp(

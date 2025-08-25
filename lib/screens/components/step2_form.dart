@@ -2,7 +2,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:atencion_ciudadana/data/menu_options.dart';
+import 'package:app_atencion_ciudadana/data/menu_options.dart';
 
 class Step2Form extends StatefulWidget {
   final String? colonia;

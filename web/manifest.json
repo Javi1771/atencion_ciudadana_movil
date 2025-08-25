@@ -1,6 +1,6 @@
 {
-    "name": "atencion_ciudadana",
-    "short_name": "atencion_ciudadana",
+    "name": "app_atencion_ciudadana",
+    "short_name": "app_atencion_ciudadana",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

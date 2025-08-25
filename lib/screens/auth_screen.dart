@@ -9,7 +9,7 @@ import '/services/auth_service.dart';
 import '/utils/rfc_test_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '/widgets/alert_helper.dart';
-import 'package:atencion_ciudadana/models/usuario_cus.dart';
+import 'package:app_atencion_ciudadana/models/usuario_cus.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -404,8 +404,13 @@ class _AuthScreenState extends State<AuthScreen> {
 
         const Text(
           'Registro y seguimiento de incidencias',
-          style: TextStyle(fontSize: 16, color: textLight),
-        ),
+          style: TextStyle(
+            fontSize: 16,
+            color: Color.fromARGB(255, 101, 101, 101),
+            letterSpacing: 0.5,
+            height: 1.4,
+
+          ),        ),
       ],
     );
   }
@@ -670,8 +675,10 @@ class _AuthScreenState extends State<AuthScreen> {
                   fontSize: 15,
                 ),
               ),
+
             ),
           ),
+                        const SizedBox(height: 15),
         ],
       ),
     );

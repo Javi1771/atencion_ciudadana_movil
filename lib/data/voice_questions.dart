@@ -24,7 +24,7 @@ class VoiceQuestions {
         'validator': null,
         'isConditional': true,
         'condition': (Map<String, dynamic> formData) {
-          // Solo preguntar el nombre si no hay CURP
+          //! Solo preguntar el nombre si no hay CURP
           return formData['curp'] == null || formData['curp']?.toString().isEmpty == true;
         },
       },
@@ -113,42 +113,42 @@ class VoiceQuestions {
     };
   }
 
-  /// Obtiene la siguiente pregunta válida basada en las condiciones
+  //* Obtiene la siguiente pregunta válida basada en las condiciones
   static int getNextQuestionIndex(List<Map<String, dynamic>> questions, int currentIndex, Map<String, dynamic> formData) {
     for (int i = currentIndex + 1; i < questions.length; i++) {
       final question = questions[i];
       final isConditional = question['isConditional'] ?? false;
       
       if (!isConditional) {
-        return i; // Pregunta incondicional, siempre se hace
+        return i; //* Pregunta incondicional, siempre se hace
       }
       
-      // Verificar condición para preguntas condicionales
+      //* Verificar condición para preguntas condicionales
       final condition = question['condition'] as bool Function(Map<String, dynamic>)?;
       if (condition != null && condition(formData)) {
-        return i; // La condición se cumple, hacer esta pregunta
+        return i; //* La condición se cumple, hacer esta pregunta
       }
       
-      // La condición no se cumple, continuar buscando
+      //* La condición no se cumple, continuar buscando
     }
     
-    return questions.length; // No hay más preguntas válidas
+    return questions.length; //! No hay más preguntas válidas
   }
 
-  /// Valida que el usuario tenga al menos CURP o nombre como identificador
+  //* Valida que el usuario tenga al menos CURP o nombre como identificador
   static String? validateIdentification(Map<String, dynamic> formData) {
     final curp = formData['curp']?.toString().trim();
     final nombre = formData['nombre']?.toString().trim();
     
-    // Debe tener al menos uno de los dos
+    //! Debe tener al menos uno de los dos
     if ((curp == null || curp.isEmpty) && (nombre == null || nombre.isEmpty)) {
       return 'Debe proporcionar al menos su CURP o nombre completo para poder procesar su solicitud.';
     }
     
-    return null; // Validación exitosa
+    return null; //* Validación exitosa
   }
 
-  /// Cuenta el total de preguntas válidas según el contexto
+  //* Cuenta el total de preguntas válidas según el contexto
   static int getTotalValidQuestions(List<Map<String, dynamic>> questions, Map<String, dynamic> formData) {
     int count = 0;
     
@@ -156,12 +156,12 @@ class VoiceQuestions {
       final isConditional = question['isConditional'] ?? false;
       
       if (!isConditional) {
-        count++; // Pregunta incondicional, siempre cuenta
+        count++; //! Pregunta incondicional, siempre cuenta
       } else {
-        // Verificar condición para preguntas condicionales
+        //* Verificar condición para preguntas condicionales
         final condition = question['condition'] as bool Function(Map<String, dynamic>)?;
         if (condition != null && condition(formData)) {
-          count++; // La condición se cumple, contar esta pregunta
+          count++; //* La condición se cumple, contar esta pregunta
         }
       }
     }
@@ -169,7 +169,7 @@ class VoiceQuestions {
     return count;
   }
 
-  /// Obtiene el índice de la pregunta actual dentro de las preguntas válidas
+  //* Obtiene el índice de la pregunta actual dentro de las preguntas válidas
   static int getCurrentValidQuestionIndex(List<Map<String, dynamic>> questions, int currentIndex, Map<String, dynamic> formData) {
     int count = 0;
     
@@ -178,12 +178,12 @@ class VoiceQuestions {
       final isConditional = question['isConditional'] ?? false;
       
       if (!isConditional) {
-        count++; // Pregunta incondicional, siempre cuenta
+        count++; //! Pregunta incondicional, siempre cuenta
       } else {
-        // Verificar condición para preguntas condicionales
+        //* Verificar condición para preguntas condicionales
         final condition = question['condition'] as bool Function(Map<String, dynamic>)?;
         if (condition != null && condition(formData)) {
-          count++; // La condición se cumple, contar esta pregunta
+          count++; //* La condición se cumple, contar esta pregunta
         }
       }
     }

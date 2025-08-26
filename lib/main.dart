@@ -9,7 +9,6 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ConnectivityService()),
-        // aquí más providers (Auth, IncidenciasRepo…)
       ],
       child: const MyApp(),
     ),

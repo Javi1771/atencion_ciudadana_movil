@@ -13,7 +13,7 @@ class HomePalette {
   static const Color textSecondary = Color(0xFF6B7280);
 }
 
-// ---------- CONTENEDOR PRINCIPAL SCROLLEABLE ----------
+//? ---------- CONTENEDOR PRINCIPAL SCROLLEABLE ----------
 Widget buildMainContainer({
   required BuildContext context,
   required Future<void> Function() onRefresh,
@@ -48,7 +48,7 @@ Widget buildMainContainer({
   );
 }
 
-// ---------- HEADER BUTTONS ----------
+//? ---------- HEADER BUTTONS ----------
 Widget buildHeaderButtons({
   required BuildContext context,
   required VoidCallback onRefresh,
@@ -101,7 +101,7 @@ Widget _glassIcon({required IconData icon, required VoidCallback onTap}) {
   );
 }
 
-// ---------- BUSCADOR ----------
+//? ---------- BUSCADOR ----------
 Widget buildGlobalSearchBar({
   required TextEditingController controller,
   required bool isSearching,
@@ -150,7 +150,7 @@ Widget buildGlobalSearchBar({
   );
 }
 
-// ---------- ESTADO + SUBIR ----------
+//? ---------- ESTADO + SUBIR ----------
 Widget buildStatusCard({
   required bool hasPending,
   required int pendingCount,
@@ -254,7 +254,7 @@ Widget buildStatusCard({
   );
 }
 
-// ---------- CTA ----------
+//? ---------- CTA ----------
 Widget buildMainActionButton({
   required BuildContext context,
   required VoidCallback onTap,
@@ -303,7 +303,7 @@ Widget buildMainActionButton({
   );
 }
 
-// ---------- RESULTADOS GLOBALES ----------
+//? ---------- RESULTADOS GLOBALES ----------
 Widget buildGlobalResultsSection({
   required List<Map<String, dynamic>> results,
   required bool isSearching,
@@ -450,7 +450,7 @@ Widget _buildGlobalResultCard(Map<String, dynamic> row) {
   );
 }
 
-// ---------- DATOS LOCALES ----------
+//? ---------- DATOS LOCALES ----------
 Widget buildLocalDataSection({
   required List<Map<String, dynamic>> rows,
   required bool Function(String) isValidCurp,
@@ -537,7 +537,7 @@ Widget buildLocalDataSection({
               ),
               child: Column(
                 children: [
-                  // header
+                  //* header
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -570,7 +570,7 @@ Widget buildLocalDataSection({
                       ],
                     ),
                   ),
-                  // body
+                  //* body
                   Padding(
                     padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
                     child: Column(
@@ -596,7 +596,7 @@ Widget buildLocalDataSection({
   );
 }
 
-// ---------- Dialogo editar CURP ----------
+//? ---------- Dialogo editar CURP ----------
 Future<String?> showEditCurpDialog({
   required BuildContext context,
   required String initialCurp,
@@ -627,7 +627,7 @@ Future<String?> showEditCurpDialog({
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // header
+                //* header
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: const BoxDecoration(
@@ -653,7 +653,7 @@ Future<String?> showEditCurpDialog({
                     ],
                   ),
                 ),
-                // body
+                //* body
                 Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -760,7 +760,7 @@ Future<String?> showEditCurpDialog({
   );
 }
 
-// ---------- helpers visuales ----------
+//? ---------- helpers visuales ----------
 Widget _smallGlassAction({required IconData icon, required VoidCallback onTap}) {
   return Material(
     color: Colors.white.withOpacity(0.22),

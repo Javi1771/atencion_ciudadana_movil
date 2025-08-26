@@ -13,9 +13,9 @@ class HomeController extends ChangeNotifier {
   List<Map<String, dynamic>> _filteredRows = [];
   bool _isUploading = false;
   String _searchQuery = '';
-  String _selectedFilter = 'todos'; // 'todos', 'con_curp', 'sin_curp', 'con_nombre'
+  String _selectedFilter = 'todos'; //* 'todos', 'con_curp', 'sin_curp', 'con_nombre'
 
-  // Getters
+  //* Getters
   List<Map<String, dynamic>> get filteredRows => _filteredRows;
   bool get isUploading => _isUploading;
   String get searchQuery => _searchQuery;
@@ -48,7 +48,7 @@ class HomeController extends ChangeNotifier {
 
   void _applyFilters() {
     _filteredRows = _allPendingRows.where((row) {
-      // Aplicar filtro de búsqueda
+      //* Aplicar filtro de búsqueda
       bool matchesSearch = true;
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
@@ -63,7 +63,7 @@ class HomeController extends ChangeNotifier {
                        comentarios.contains(query);
       }
 
-      // Aplicar filtro de tipo
+      //* Aplicar filtro de tipo
       bool matchesFilter = true;
       switch (_selectedFilter) {
         case 'con_curp':
@@ -71,9 +71,6 @@ class HomeController extends ChangeNotifier {
           break;
         case 'sin_curp':
           matchesFilter = !_isValidForUpload(row);
-          break;
-        case 'con_nombre':
-          matchesFilter = (row['nombre']?.toString() ?? '').isNotEmpty;
           break;
         case 'todos':
         default:
@@ -86,27 +83,27 @@ class HomeController extends ChangeNotifier {
 
   bool _isValidForUpload(Map<String, dynamic> row) {
     final curp = row['curp']?.toString() ?? '';
-    // Validar que sea una CURP válida (18 caracteres alfanuméricos)
-    // Y que NO sea solo un nombre (no debe contener espacios)
+    //* Validar que sea una CURP válida (18 caracteres alfanuméricos)
+    //! Y que NO sea solo un nombre (no debe contener espacios)
     return curp.isNotEmpty && 
            curp.length == 18 && 
            RegExp(r'^[A-Z0-9]{18}$').hasMatch(curp) &&
-           !curp.contains(' '); // No debe contener espacios (nombres)
+           !curp.contains(' '); //* No debe contener espacios (nombres)
   }
 
   bool _isValidCurp(String curp) {
-    // Validación estricta de CURP
+    //* Validación estricta de CURP
     if (curp.length != 18) return false;
     if (!RegExp(r'^[A-Z0-9]{18}$').hasMatch(curp)) return false;
-    if (curp.contains(' ')) return false; // No debe contener espacios
+    if (curp.contains(' ')) return false; //! No debe contener espacios
     
-    // Validación adicional: patrón básico de CURP
+    //* Validación adicional: patrón básico de CURP
     final curpPattern = RegExp(r'^[A-Z][AEIOUX][A-Z]{2}[0-9]{6}[HM][A-Z]{5}[A-Z0-9][0-9]$');
     return curpPattern.hasMatch(curp);
   }
 
   Future<void> uploadJson() async {
-    // Filtrar solo registros con CURP válida (no nombres)
+    //* Filtrar solo registros con CURP válida (no nombres)
     final validRows = _allPendingRows.where((row) => _isValidForUpload(row)).toList();
 
     if (validRows.isEmpty) {
@@ -173,7 +170,7 @@ class HomeController extends ChangeNotifier {
       }
 
       if (ok) {
-        // Eliminar solo los registros válidos que se subieron
+        //! Eliminar solo los registros válidos que se subieron
         for (var row in validRows) {
           await IncidenceLocalRepo.delete(row['id'] as int);
         }
@@ -181,7 +178,7 @@ class HomeController extends ChangeNotifier {
 
         AlertHelper.showAlert(msg, type: AlertType.success);
 
-        // Mostrar advertencia si quedan registros sin CURP válida
+        //* Mostrar advertencia si quedan registros sin CURP válida
         if (_allPendingRows.isNotEmpty) {
           AlertHelper.showAlert(
             'Algunos registros no se subieron porque no tienen CURP válida o solo tienen nombre',
@@ -242,11 +239,11 @@ class HomeController extends ChangeNotifier {
 
   Color getRecordStatusColor(Map<String, dynamic> row) {
     if (_isValidForUpload(row)) {
-      return const Color(0xFF2E7D32); // Verde
+      return const Color(0xFF2E7D32); //* Verde
     } else if ((row['nombre']?.toString() ?? '').isNotEmpty) {
-      return const Color(0xFFE65100); // Naranja
+      return const Color(0xFFE65100); //todo: Naranja
     } else {
-      return const Color(0xFFD32F2F); // Rojo
+      return const Color(0xFFD32F2F); //! Rojo
     }
   }
 
@@ -255,7 +252,6 @@ class HomeController extends ChangeNotifier {
       'todos',
       'con_curp',
       'sin_curp', 
-      'con_nombre',
     ];
   }
 
@@ -267,9 +263,6 @@ class HomeController extends ChangeNotifier {
         return 'Con CURP válida ($validRows)';
       case 'sin_curp':
         return 'Sin CURP ($invalidRows)';
-      case 'con_nombre':
-        final conNombre = _allPendingRows.where((r) => (r['nombre']?.toString() ?? '').isNotEmpty).length;
-        return 'Con nombre ($conNombre)';
       default:
         return filter;
     }

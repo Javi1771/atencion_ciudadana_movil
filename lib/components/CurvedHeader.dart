@@ -31,7 +31,7 @@ class CurvedHeader extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Overlay de cristal con opacidad
+          //* Overlay de cristal con opacidad
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -55,9 +55,9 @@ class CurvedHeader extends StatelessWidget {
             ),
           ),
           
-          // Contenido del header - Alineado exactamente con el botón
+          //* Contenido del header - Alineado exactamente con el botón
           Positioned(
-            top: MediaQuery.of(context).padding.top + 16, // Centrado vertical con el botón
+            top: MediaQuery.of(context).padding.top + 16, //* Centrado vertical con el botón
             left: 0,
             right: 0,
             child: Center(
@@ -67,7 +67,7 @@ class CurvedHeader extends StatelessWidget {
                   color: textColor,
                   fontSize: fontSize,
                   fontWeight: FontWeight.bold,
-                  // Shadow para el texto para mejor legibilidad
+                  //* Shadow para el texto para mejor legibilidad
                   shadows: [
                     Shadow(
                       color: Colors.black.withOpacity(0.4),

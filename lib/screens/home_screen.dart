@@ -1,6 +1,5 @@
 // lib/screens/home_screen.dart
-
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:app_atencion_ciudadana/controllers/home_controller.dart';
@@ -17,7 +16,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late HomeController _controller;
   final TextEditingController _searchController = TextEditingController();
 
-  // Sistema de colores actualizado - matching voice_incidence_screen
+  //? Sistema de colores actualizado - matching voice_incidence_screen
   static const Color primaryPurple = Color(0xFF6B46C1);
   static const Color accentPurple = Color(0xFF8B5CF6);
   static const Color backgroundGradient1 = Color(0xFFF8FAFF);
@@ -67,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
           return Stack(
             children: [
-              // Banner Curvo - Similar al voice_incidence_screen
+              //? Banner Curvo - Similar al voice_incidence_screen
               Positioned(
                 top: 0,
                 left: 0,
@@ -79,10 +78,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ),
 
-              // Botones sobre el banner
+              //* Botones sobre el banner
               _buildHeaderButtons(),
 
-              // Contenedor principal con el nuevo estilo
+              //* Contenedor principal con el nuevo estilo
               Positioned(
                 top: contentTop,
                 left: 0,
@@ -115,19 +114,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             children: [
                               SizedBox(height: isSmallScreen ? 8 : 12),
                               
-                              // Tarjeta de estadísticas mejorada
+                              //* Tarjeta de estadísticas mejorada
                               _buildEnhancedStatsCard(),
                               const SizedBox(height: 16),
 
-                              // Buscador mejorado
+                              //* Buscador mejorado
                               _buildEnhancedSearchField(),
                               const SizedBox(height: 12),
 
-                              // Filtros mejorados
+                              //* Filtros mejorados
                               _buildEnhancedFilterChips(),
                               const SizedBox(height: 16),
 
-                              // Botón de nueva incidencia mejorado
+                              //* Botón de nueva incidencia mejorado
                               _buildEnhancedNewIncidenceButton(),
                               const SizedBox(height: 16),
                             ],
@@ -135,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ),
                       ),
 
-                      // Lista de registros o estados vacíos
+                      //* Lista de registros o estados vacíos
                       if (_controller.filteredRows.isNotEmpty)
                         _buildEnhancedRecordsList()
                       else if (_controller.hasPending)
@@ -153,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  // === Header buttons ===
+  //? === Header buttons ===
   Widget _buildHeaderButtons() {
     return Positioned(
       top: MediaQuery.of(context).padding.top + 8,
@@ -162,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Botón de actualizar
+          //* Botón de actualizar
           IconButton(
             onPressed: _controller.loadPending,
             icon: const Icon(Icons.refresh, color: Colors.white, size: 22),
@@ -175,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           ),
           
-          // Solo botón de logout
+          //! Solo botón de logout
           IconButton(
             onPressed: () => _controller.logout(context),
             icon: const Icon(Icons.logout, color: Colors.white, size: 22),
@@ -233,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  // === Tarjeta de estadísticas mejorada ===
+  //? === Tarjeta de estadísticas mejorada ===
   Widget _buildEnhancedStatsCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -275,7 +274,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                 ],
               ),
-              // Botón de subir en la tarjeta de estadísticas
+              //* Botón de subir en la tarjeta de estadísticas
               if (_controller.hasValidRows)
                 _controller.isUploading
                     ? Container(
@@ -345,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  // === Buscador mejorado ===
+  //? === Buscador mejorado ===
   Widget _buildEnhancedSearchField() {
     return Container(
       decoration: BoxDecoration(
@@ -386,7 +385,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  // === Filtros mejorados ===
+  //? === Filtros mejorados ===
   Widget _buildEnhancedFilterChips() {
     return SizedBox(
       height: 40,
@@ -440,7 +439,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  // === Botón de nueva incidencia mejorado ===
+  //? === Botón de nueva incidencia mejorado ===
   Widget _buildEnhancedNewIncidenceButton() {
     return Container(
       width: double.infinity,
@@ -495,7 +494,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  // === Lista de registros mejorada ===
+  //? === Lista de registros mejorada ===
   Widget _buildEnhancedRecordsList() {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
@@ -532,7 +531,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
       child: Column(
         children: [
-          // Header del registro mejorado
+          //* Header del registro mejorado
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -606,7 +605,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           ),
 
-          // Contenido del registro mejorado
+          //* Contenido del registro mejorado
           if (colonia.isNotEmpty || comentarios.isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(16),
@@ -667,7 +666,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  // === Estados vacíos mejorados ===
+  //? === Estados vacíos mejorados ===
   Widget _buildEnhancedNoResultsWidget() {
     return SliverFillRemaining(
       child: Container(
@@ -746,112 +745,140 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  // === Diálogo de edición mejorado ===
+  //? === Diálogo de edición mejorado ===
   void _showEnhancedEditCurpDialog(Map<String, dynamic> row) {
     final TextEditingController curpController = TextEditingController(
       text: row['curp']?.toString() ?? '',
     );
 
+    String? errorText;
+
     showDialog(
       context: context,
       builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: cardBackground,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: primaryPurple.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(Icons.edit_rounded, size: 20, color: primaryPurple),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Editar CURP',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
-                    ),
-                  ],
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: cardBackground,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 20),
-                Container(
-                  decoration: BoxDecoration(
-                    color: cardBackground,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: borderColor),
-                  ),
-                  child: TextField(
-                    controller: curpController,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: InputDecoration(
-                      labelText: 'Nueva CURP (18 caracteres)',
-                      labelStyle: TextStyle(color: primaryPurple),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.all(16),
-                      counterStyle: TextStyle(color: textSecondary),
-                    ),
-                    maxLength: 18,
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: TextButton.styleFrom(
-                          foregroundColor: textSecondary,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: primaryPurple.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(Icons.edit_rounded, size: 20, color: primaryPurple),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Editar CURP',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
                           ),
                         ),
-                        child: const Text('Cancelar'),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: cardBackground,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: borderColor),
+                      ),
+                      child: TextField(
+                        controller: curpController,
+                        textCapitalization: TextCapitalization.characters,
+                        onChanged: (v) {
+                          //* Limpia el error al llegar a 18 y formato válido
+                          final val = v.trim().toUpperCase();
+                          if (val.length == 18 && RegExp(r'^[A-Z0-9]{18}$').hasMatch(val)) {
+                            setState(() => errorText = null);
+                          }
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Nueva CURP (18 caracteres)',
+                          labelStyle: TextStyle(color: primaryPurple),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.all(16),
+                          counterStyle: TextStyle(color: textSecondary),
+                          errorText: errorText,
+                        ),
+                        maxLength: 18,
+                        style: const TextStyle(fontSize: 14, letterSpacing: 1.2),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [primaryPurple, accentPurple]),
-                          borderRadius: BorderRadius.circular(10),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              foregroundColor: textSecondary,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text('Cancelar'),
+                          ),
                         ),
-                        child: TextButton(
-                          onPressed: () {
-                            // Aquí iría la lógica para guardar la CURP editada
-                            Navigator.pop(context);
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(colors: [primaryPurple, accentPurple]),
                               borderRadius: BorderRadius.circular(10),
                             ),
+                            child: TextButton(
+                              onPressed: () async {
+                                final newCurp = curpController.text.trim().toUpperCase();
+
+                                if (newCurp.isEmpty) {
+                                  setState(() => errorText = 'La CURP no puede estar vacía');
+                                  return;
+                                }
+                                if (newCurp.length != 18 || !RegExp(r'^[A-Z0-9]{18}$').hasMatch(newCurp)) {
+                                  setState(() => errorText = 'Formato inválido. Debe ser A-Z/0-9 y 18 caracteres');
+                                  return;
+                                }
+
+                                //* Actualiza en BD y recarga lista
+                                await _controller.updateCurp(row['id'] as int, newCurp);
+                                await _controller.loadPending();
+
+                                if (mounted) Navigator.pop(context);
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text('Guardar'),
+                            ),
                           ),
-                          child: const Text('Guardar'),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

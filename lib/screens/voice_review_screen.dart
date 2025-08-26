@@ -35,7 +35,7 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
     _initializeTts();
     _initializeControllers();
 
-    // Mensaje inicial
+    //* Mensaje inicial
     Future.delayed(const Duration(milliseconds: 500), () {
       _speak(
         'Ha terminado la entrevista. Ahora puede revisar y editar sus respuestas antes de guardar.',
@@ -48,7 +48,7 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
     await _tts.setSpeechRate(0.5);
     await _tts.setVolume(1.0);
     await _tts.setPitch(1.0);
-    await _tts.awaitSpeakCompletion(true); // 👈 espera a que termine de hablar
+    await _tts.awaitSpeakCompletion(true); //* espera a que termine de hablar
   }
 
   void _initializeControllers() {
@@ -62,20 +62,20 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
   Future<void> _speak(String text) async {
     if (text.isNotEmpty) {
       await _tts.speak(text);
-      // con awaitSpeakCompletion(true), esta línea esperará a que termine el TTS
+      //* con awaitSpeakCompletion(true), esta línea esperará a que termine el TTS
     }
   }
 
   Future<void> _saveForm() async {
     try {
-      // 1) Tomar lo editado en la pantalla de review
+      //? 1) Tomar lo editado en la pantalla de review
       final Map<String, dynamic> updatedFormData = {};
       for (var field in _reviewControllers.keys) {
         updatedFormData[field] =
             _reviewControllers[field]!.text.toUpperCase().trim();
       }
 
-      // 2) Asegurar identificador mínimo (CURP o nombre)
+      //? 2) Asegurar identificador mínimo (CURP o nombre)
       if ((updatedFormData['curp'] ?? '').toString().isEmpty) {
         updatedFormData['curp'] =
             (updatedFormData['nombre'] ?? 'SIN_IDENTIFICADOR')
@@ -87,13 +87,13 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
         updatedFormData.remove('nombre');
       }
 
-      // 3) NO guardar fecha (si viniera en el mapa)
+      //? 3) NO guardar fecha (si viniera en el mapa)
       updatedFormData.remove('fecha_registro');
 
-      // 4) Guardar en DB
+      //? 4) Guardar en DB
       await IncidenceLocalRepo.save(updatedFormData);
 
-      // 5) Feedback por voz y visual
+      //? 5) Feedback por voz y visual
       await _speak(
           '¡Perfecto! Su incidencia ha sido registrada correctamente. Iniciaremos una nueva entrevista.');
       AlertHelper.showAlert(
@@ -101,13 +101,13 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
         type: AlertType.success,
       );
 
-      // 6) Limpiar los campos del review (opcional)
+      //? 6) Limpiar los campos del review (opcional)
       for (final c in _reviewControllers.values) {
         c.text = '';
       }
 
-      // 7) Navegar a la pantalla de voz definida en rutas,
-      //    limpiando el stack para empezar de cero
+      //? 7) Navegar a la pantalla de voz definida en rutas,
+      //?    limpiando el stack para empezar de cero
       if (mounted) {
         Navigator.of(context).pushNamedAndRemoveUntil(
           AppRoutes.offlineFormIncidenceVoice,
@@ -125,7 +125,7 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
     }
   }
 
-  // Mapa de iconos (opcional)
+  //* Mapa de iconos (opcional)
   final Map<String, IconData> _fieldIcons = {
     'nombre': Icons.person,
     'curp': Icons.badge,
@@ -154,7 +154,7 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
 
           return Stack(
             children: [
-              // Header
+              //* Header
               Positioned(
                 top: 0,
                 left: 0,
@@ -166,7 +166,7 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
                 ),
               ),
 
-              // Back
+              //* Back
               Positioned(
                 top: MediaQuery.of(context).padding.top + 8,
                 left: 16,
@@ -190,7 +190,7 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
                 ),
               ),
 
-              // Help
+              //* Help
               Positioned(
                 top: MediaQuery.of(context).padding.top + 8,
                 right: 16,
@@ -217,7 +217,7 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
                 ),
               ),
 
-              // Contenido
+              //* Contenido
               Positioned(
                 top: headerHeight - 40,
                 left: 0,
@@ -244,7 +244,7 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
                       children: [
                         SizedBox(height: isSmallScreen ? 16 : 20),
 
-                        // Banner de estado
+                        //* Banner de estado
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 12),
@@ -290,7 +290,7 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
 
                         SizedBox(height: isSmallScreen ? 16 : 20),
 
-                        // Título de sección
+                        //* Título de sección
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
                           child: Row(
@@ -312,7 +312,7 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
 
                         SizedBox(height: isSmallScreen ? 16 : 20),
 
-                        // Formulario de revisión
+                        //* Formulario de revisión
                         Expanded(
                           child: ListView(
                             children: widget.formData.keys.map((field) {
@@ -416,7 +416,7 @@ class _VoiceReviewScreenState extends State<VoiceReviewScreen> {
 
                         SizedBox(height: isSmallScreen ? 16 : 20),
 
-                        // Botones
+                        //* Botones
                         Row(
                           children: [
                             Expanded(

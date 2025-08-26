@@ -10,7 +10,7 @@ import 'package:app_atencion_ciudadana/services/connectivity_service.dart';
 import './components/step2_form.dart';
 import './components/step3_form.dart';
 
-// 👇 Para validar que los argumentos de voz existan en los catálogos de dropdowns
+//* 👇 Para validar que los argumentos de voz existan en los catálogos de dropdowns
 import 'package:app_atencion_ciudadana/data/menu_options.dart';
 
 class IncidenceStepsScreen extends StatefulWidget {
@@ -102,8 +102,8 @@ class _IncidenceStepsScreenState extends State<IncidenceStepsScreen>
     //? ↑ Aquí termina la inicialización de animaciones ↑
   }
 
-  /// Prefill desde arguments (por ejemplo, si vienes del intake por voz).
-  /// Acepta claves en snake_case o camelCase.
+  ///* Prefill desde arguments (por ejemplo, si vienes del intake por voz).
+  ///* Acepta claves en snake_case o camelCase.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -119,7 +119,7 @@ class _IncidenceStepsScreenState extends State<IncidenceStepsScreen>
         return null;
       }
 
-      // Helper: sólo aceptar valores de dropdown que EXISTAN en sus catálogos
+      //* Helper: sólo aceptar valores de dropdown que EXISTAN en sus catálogos
       String? accept(List<String> options, String? v) {
         if (v == null) return null;
         final i = options.indexWhere((o) => o.toLowerCase() == v.toLowerCase());
@@ -163,7 +163,7 @@ class _IncidenceStepsScreenState extends State<IncidenceStepsScreen>
   Future<bool> _validateCurrentStep() async {
     switch (_currentStep) {
       case 0:
-        return true; // CURP opcional en este paso (se advierte si viene vacío)
+        return true; //* CURP opcional en este paso (se advierte si viene vacío)
       case 1:
         return _colonia != null && _direccionCtrl.text.trim().isNotEmpty;
       case 2:
@@ -412,7 +412,7 @@ class _IncidenceStepsScreenState extends State<IncidenceStepsScreen>
                   IconButton(
                     icon:
                         const Icon(Icons.close, color: Colors.white70, size: 20),
-                    onPressed: () {}, // opcional: ocultar banner con estado local
+                    onPressed: () {}, //* opcional: ocultar banner con estado local
                   ),
                 ],
               ),

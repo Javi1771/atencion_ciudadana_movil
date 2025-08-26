@@ -12,7 +12,7 @@ class ConnectivityService with ChangeNotifier {
       _online = status != ConnectivityResult.none;
       notifyListeners();
     });
-    // chequeo inicial
+    //* chequeo inicial
     Connectivity().checkConnectivity().then((status) {
       _online = status != ConnectivityResult.none;
       notifyListeners();

@@ -10,7 +10,7 @@ class VoiceQuestions {
       {
         'field': 'curp',
         'question':
-            'Para comenzar, por favor dígame su CURP completa, puede pausar entre cada letra y número. Son 18 caracteres en total. Si no la conoce, diga "OMITIR".',
+            'Para comenzar, por favor dígame su CURP completa, puede pausar entre cada letra y número. Si no la conoce, diga "OMITIR".',
         'options': null,
         'skipOption': true,
         'validator': CurpValidator.validate,
@@ -89,7 +89,7 @@ class VoiceQuestions {
       },
       {
         'field': 'secretaria',
-        'question': '¿Qué secretaría debería encargarse de esto? ${VoiceUtils.generateOptionsText(MenuOptions.secretarias, 'secretaria')}',
+        'question': '¿Qué secretaría debería encargarse de esto?, Algunas opciones son: SERVICIOS PUBLICOS MUNICIPALES, OBRAS PUBLICAS, JAPAM, DESARROLLO SOCIAL, entre otras.',
         'options': MenuOptions.secretarias,
         'skipOption': false,
         'validator': null,

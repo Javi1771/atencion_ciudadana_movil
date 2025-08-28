@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, unused_catch_stack
 
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,11 +17,11 @@ class AuthService {
 
   //* 🔐 Inicia sesión y guarda el token si es exitoso
   Future<bool> login(String username, String password) async {
-    print('[AuthService] 🚀 INICIANDO LOGIN DEBUG');
-    print('[AuthService] 📡 URL: $_loginUrl');
-    print('[AuthService] 🔑 API Key: ${_apiKey.substring(0, 10)}...');
-    print('[AuthService] 👤 Username: "$username"');
-    print('[AuthService] 🔒 Password length: ${password.length}');
+    //? print('[AuthService] 🚀 INICIANDO LOGIN DEBUG');
+    //? print('[AuthService] 📡 URL: $_loginUrl');
+    //? print('[AuthService] 🔑 API Key: ${_apiKey.substring(0, 10)}...');
+    //? print('[AuthService] 👤 Username: "$username"');
+    //? print('[AuthService] 🔒 Password length: ${password.length}');
     
     try {
       final requestBody = {
@@ -29,7 +29,7 @@ class AuthService {
         'password': password,
       };
       
-      print('[AuthService] 📤 Request body: ${jsonEncode(requestBody)}');
+      //? print('[AuthService] 📤 Request body: ${jsonEncode(requestBody)}');
       
       final response = await http.post(
         Uri.parse(_loginUrl),
@@ -40,13 +40,13 @@ class AuthService {
         body: jsonEncode(requestBody),
       );
 
-      print('[AuthService] 📥 Response status: ${response.statusCode}');
-      print('[AuthService] 📥 Response headers: ${response.headers}');
-      print('[AuthService] 📥 Response body: ${response.body}');
+      //? print('[AuthService] 📥 Response status: ${response.statusCode}');
+      //? print('[AuthService] 📥 Response headers: ${response.headers}');
+      //? print('[AuthService] 📥 Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[AuthService] 📊 Parsed data: $data');
+        //? print('[AuthService] 📊 Parsed data: $data');
         
         if (data['success'] == true && data['token'] != null) {
           final token = data['token'];
@@ -56,22 +56,22 @@ class AuthService {
           await prefs.setString(_tokenKey, token);
           await prefs.setString(_userDataKey, jsonEncode(data));
 
-          print('[AuthService] ✅ Token guardado correctamente: ${token.substring(0, 20)}...');
-          print('[AuthService] ✅ Datos de usuario guardados');
+          //? print('[AuthService] ✅ Token guardado correctamente: ${token.substring(0, 20)}...');
+          //? print('[AuthService] ✅ Datos de usuario guardados');
           return true;
         } else {
-          print('[AuthService] ❌ Login falló - success: ${data['success']}, token: ${data['token']}');
-          print('[AuthService] ❌ Mensaje de error: ${data['message']}');
+          //? print('[AuthService] ❌ Login falló - success: ${data['success']}, token: ${data['token']}');
+          //? print('[AuthService] ❌ Mensaje de error: ${data['message']}');
           return false;
         }
       } else {
-        print('[AuthService] ❌ Error HTTP ${response.statusCode}');
-        print('[AuthService] ❌ Response body: ${response.body}');
+        //? print('[AuthService] ❌ Error HTTP ${response.statusCode}');
+        //? print('[AuthService] ❌ Response body: ${response.body}');
         return false;
       }
     } catch (e, stackTrace) {
-      print('[AuthService] ❌ EXCEPCIÓN en login: $e');
-      print('[AuthService] ❌ Stack trace: $stackTrace');
+      //? print('[AuthService] ❌ EXCEPCIÓN en login: $e');
+      //? print('[AuthService] ❌ Stack trace: $stackTrace');
       return false;
     }
   }
@@ -81,7 +81,7 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_userDataKey);
-    print('[AuthService] 🚪 Sesión cerrada - datos eliminados');
+    //? print('[AuthService] 🚪 Sesión cerrada - datos eliminados');
   }
 
   //* 🔍 Verifica si hay una sesión activa
@@ -89,7 +89,7 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(_tokenKey);
     final isLogged = token != null;
-    print('[AuthService] 🔍 ¿Sesión activa? $isLogged');
+    //? print('[AuthService] 🔍 ¿Sesión activa? $isLogged');
     return isLogged;
   }
 
@@ -99,10 +99,10 @@ class AuthService {
     final jsonString = prefs.getString(_userDataKey);
     if (jsonString != null) {
       final userData = jsonDecode(jsonString);
-      print('[AuthService] 👤 Datos de usuario obtenidos: ${userData.keys}');
+      //? print('[AuthService] 👤 Datos de usuario obtenidos: ${userData.keys}');
       return userData;
     }
-    print('[AuthService] ❌ No hay datos de usuario guardados');
+    //? print('[AuthService] ❌ No hay datos de usuario guardados');
     return null;
   }
 
@@ -110,7 +110,7 @@ class AuthService {
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(_tokenKey);
-    print('[AuthService] 📦 Token obtenido: ${token != null ? '${token.substring(0, 20)}...' : 'null'}');
+    //? print('[AuthService] 📦 Token obtenido: ${token != null ? '${token.substring(0, 20)}...' : 'null'}');
     return token;
   }
 }

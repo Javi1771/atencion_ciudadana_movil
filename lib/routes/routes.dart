@@ -20,7 +20,7 @@ class AppRoutes {
     offlineForm: (_) => const IncidenceFormScreen(),              //* elección
     offlineFormIncidence: (_) => const IncidenceStepsScreen(),   //* manual
     offlineFormIncidenceVoice: (_) => const VoiceIncidenceScreen(), //* VOZ
-    offlineCitizen: (_) => const CitizenVoiceScreen(), //* Registro ciudadano
+    offlineCitizen: (_) => const CitizenVoiceRegistrationScreen(), //* Registro ciudadano
     home: (_) => const HomeScreen(),
   };
 }

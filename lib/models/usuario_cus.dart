@@ -141,9 +141,9 @@ class UsuarioCUS {
     ]);
 
     //* Debug logging para nómina
-    print('[UsuarioCUS] 🎯 Nómina obtenida en modelo: $nomina');
+    //? print('[UsuarioCUS] 🎯 Nómina obtenida en modelo: $nomina');
     if (nomina != null) {
-      print('[UsuarioCUS] ✅ Nómina encontrada, será asignada al usuario');
+      //? print('[UsuarioCUS] ✅ Nómina encontrada, será asignada al usuario');
     }
 
     //* Obtener el tipo de perfil explícito si viene en los datos
@@ -158,18 +158,18 @@ class UsuarioCUS {
     ]);
 
     //* Debug logging
-    print('[UsuarioCUS] Determinando tipo de perfil...');
-    print('[UsuarioCUS] Folio: $folio');
-    print('[UsuarioCUS] Nómina: $nomina');
-    print('[UsuarioCUS] ID Ciudadano: $idCiudadano');
-    print('[UsuarioCUS] Tipo perfil explícito: $tipoPerfilExplicito');
+    //? print('[UsuarioCUS] Determinando tipo de perfil...');
+    //? print('[UsuarioCUS] Folio: $folio');
+    //? print('[UsuarioCUS] Nómina: $nomina');
+    //? print('[UsuarioCUS] ID Ciudadano: $idCiudadano');
+    //? print('[UsuarioCUS] Tipo perfil explícito: $tipoPerfilExplicito');
 
     //* Determinar tipo de perfil basado en identificadores y datos disponibles
     TipoPerfilCUS tipoPerfil;
     
     //* Primero verificar si viene explícitamente en los datos
     if (tipoPerfilExplicito != null) {
-      print('[UsuarioCUS] Usando tipo de perfil explícito: $tipoPerfilExplicito');
+      //? print('[UsuarioCUS] Usando tipo de perfil explícito: $tipoPerfilExplicito');
       switch (tipoPerfilExplicito.toLowerCase()) {
         case 'ciudadano':
         case 'persona_fisica':
@@ -194,14 +194,14 @@ class UsuarioCUS {
     }
     //* Si no viene explícito, determinar por identificadores
     else if (folio != null && folio.isNotEmpty) {
-      print('[UsuarioCUS] Tipo determinado por folio: ciudadano');
+      //? print('[UsuarioCUS] Tipo determinado por folio: ciudadano');
       tipoPerfil = TipoPerfilCUS.ciudadano;
     } else if (nomina != null && nomina.isNotEmpty) {
-      print('[UsuarioCUS] Tipo determinado por nómina: trabajador');
+      //? print('[UsuarioCUS] Tipo determinado por nómina: trabajador');
       tipoPerfil = TipoPerfilCUS.trabajador;
     } else if (idCiudadano != null && idCiudadano.isNotEmpty) {
       //* Si tiene ID ciudadano, es una persona física (ciudadano)
-      print('[UsuarioCUS] Tipo determinado por ID ciudadano: ciudadano');
+      //? print('[UsuarioCUS] Tipo determinado por ID ciudadano: ciudadano');
       tipoPerfil = TipoPerfilCUS.ciudadano;
     } else {
       //* Verificar otros indicadores de persona física vs moral
@@ -209,25 +209,25 @@ class UsuarioCUS {
       final curp = getStringValue(['curp', 'CURP']);
       getStringValue(['rfc', 'RFC']);
       
-      print('[UsuarioCUS] Verificando otros indicadores...');
-      print('[UsuarioCUS] Razón social: $razonSocial');
-      print('[UsuarioCUS] CURP: $curp');
+      //? print('[UsuarioCUS] Verificando otros indicadores...');
+      //? print('[UsuarioCUS] Razón social: $razonSocial');
+      //? print('[UsuarioCUS] CURP: $curp');
       
       if (razonSocial != null && razonSocial.isNotEmpty) {
-        print('[UsuarioCUS] Tipo determinado por razón social: persona moral');
+        //? print('[UsuarioCUS] Tipo determinado por razón social: persona moral');
         tipoPerfil = TipoPerfilCUS.personaMoral;
       } else if (curp != null && curp.isNotEmpty && curp != 'Sin CURP') {
         //* Si tiene CURP, es persona física
-        print('[UsuarioCUS] Tipo determinado por CURP: ciudadano');
+        //? print('[UsuarioCUS] Tipo determinado por CURP: ciudadano');
         tipoPerfil = TipoPerfilCUS.ciudadano;
       } else {
         //! Por defecto, asumir ciudadano si no hay indicadores claros de persona moral
-        print('[UsuarioCUS] Tipo determinado por defecto: ciudadano');
+        //? print('[UsuarioCUS] Tipo determinado por defecto: ciudadano');
         tipoPerfil = TipoPerfilCUS.ciudadano;
       }
     }
 
-    print('[UsuarioCUS] Tipo de perfil final: $tipoPerfil');
+    //? print('[UsuarioCUS] Tipo de perfil final: $tipoPerfil');
 
     //* Extraer documentos si existen
     List<DocumentoCUS>? documentosList;

@@ -154,7 +154,7 @@ class IncidenceFormScreen extends StatelessWidget {
                               description:
                                   'Crea un registro de ciudadano dictando sus datos (solo voz).',
                               actionText: 'Registrar ciudadano',
-                              primaryColor: Color(0xFF0D9488), // teal
+                              primaryColor: Color(0xFF0D9488), 
                               onPressedRoute: '/offlineForm/citizen',
                             ),
                           ],

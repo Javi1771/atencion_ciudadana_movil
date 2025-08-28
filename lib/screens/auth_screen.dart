@@ -1,4 +1,4 @@
-// ignore_for_file: library_private_types_in_public_api, deprecated_member_use, use_build_context_synchronously
+// ignore_for_file: library_private_types_in_public_api, deprecated_member_use, use_build_context_synchronously, unused_local_variable, body_might_complete_normally_nullable, unused_catch_stack
 
 import 'dart:io';
 
@@ -80,15 +80,15 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   void _testRFCValidation() {
-    debugPrint('\n=== INICIO DE PRUEBAS DE VALIDACIÓN ===');
+    //? debugPrint('\n=== INICIO DE PRUEBAS DE VALIDACIÓN ===');
 
     //* Prueba del RFC especial
     const specialRFC = 'ORG1213456789';
     final result = RFCTestHelper.analyzeRFC(specialRFC);
-    debugPrint('RFC especial: $specialRFC');
-    debugPrint('Válido: ${result['valid']}');
-    debugPrint('Es excepción: ${result['isExcepcion']}');
-    debugPrint('Tipo: ${result['type']}');
+    //? debugPrint('RFC especial: $specialRFC');
+    //? debugPrint('Válido: ${result['valid']}');
+    //? debugPrint('Es excepción: ${result['isExcepcion']}');
+    //? debugPrint('Tipo: ${result['type']}');
 
     //* Ejecutar pruebas del helper
     RFCTestHelper.testRFCValidation();
@@ -103,7 +103,7 @@ class _AuthScreenState extends State<AuthScreen> {
     final inputUpper = input.toUpperCase();
 
     if (kDebugMode) {
-      debugPrint('\n🔍 Validando input: "$input" (${input.length} chars)');
+      //? debugPrint('\n🔍 Validando input: "$input" (${input.length} chars)');
     }
 
     //* Validación de email
@@ -112,7 +112,7 @@ class _AuthScreenState extends State<AuthScreen> {
         r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
       );
       if (emailRegex.hasMatch(input)) {
-        if (kDebugMode) debugPrint('✅ Email válido detectado');
+        if (kDebugMode) //? debugPrint('✅ Email válido detectado');
         return null;
       }
       return 'Formato de email incorrecto';
@@ -122,7 +122,7 @@ class _AuthScreenState extends State<AuthScreen> {
     if (inputUpper.length == 18) {
       final curpRegex = RegExp(r'^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[A-Z0-9][0-9]$');
       if (curpRegex.hasMatch(inputUpper)) {
-        if (kDebugMode) debugPrint('✅ CURP válido detectado');
+        if (kDebugMode) //? debugPrint('✅ CURP válido detectado');
         return null;
       }
       return 'Formato de CURP incorrecto';
@@ -130,7 +130,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
     //* Validación especial para RFC de excepción (comparación exacta)
     if (inputUpper == 'ORG1213456789') {
-      debugPrint('✅ RFC de excepción aceptado exactamente');
+      //? debugPrint('✅ RFC de excepción aceptado exactamente');
       return null;
     }
 
@@ -139,14 +139,14 @@ class _AuthScreenState extends State<AuthScreen> {
       final rfcAnalysis = RFCTestHelper.analyzeRFC(inputUpper);
 
       if (kDebugMode) {
-        debugPrint('🔍 Análisis RFC:');
-        debugPrint('- Válido: ${rfcAnalysis['valid']}');
-        debugPrint('- Excepción: ${rfcAnalysis['isExcepcion']}');
-        debugPrint('- Tipo: ${rfcAnalysis['type']}');
+        //? debugPrint('🔍 Análisis RFC:');
+        //? debugPrint('- Válido: ${rfcAnalysis['valid']}');
+        //? debugPrint('- Excepción: ${rfcAnalysis['isExcepcion']}');
+        //? debugPrint('- Tipo: ${rfcAnalysis['type']}');
       }
 
       if (rfcAnalysis['valid'] == true) {
-        if (kDebugMode) debugPrint('✅ RFC válido detectado');
+        if (kDebugMode) //? debugPrint('✅ RFC válido detectado');
         return null;
       }
 
@@ -157,7 +157,7 @@ class _AuthScreenState extends State<AuthScreen> {
           '- Caso especial exacto: ORG1213456789';
     }
 
-    if (kDebugMode) debugPrint('❌ Formato no reconocido');
+    if (kDebugMode) //? debugPrint('❌ Formato no reconocido');
     return 'Ingresa un correo, CURP (18 chars)';
   }
 
@@ -253,7 +253,7 @@ class _AuthScreenState extends State<AuthScreen> {
         type: AlertType.warning,
       );
     } catch (e, st) {
-      debugPrint('❌ Error en login: $e\n$st');
+      //? debugPrint('❌ Error en login: $e\n$st');
       AlertHelper.showAlert(
         'Error inesperado\nPor favor intenta nuevamente más tarde',
         type: AlertType.error,
@@ -409,8 +409,8 @@ class _AuthScreenState extends State<AuthScreen> {
             color: Color.fromARGB(255, 101, 101, 101),
             letterSpacing: 0.5,
             height: 1.4,
-
-          ),        ),
+          ),
+        ),
       ],
     );
   }
@@ -482,19 +482,18 @@ class _AuthScreenState extends State<AuthScreen> {
               width: double.infinity,
               height: 45,
               child: ElevatedButton(
-                onPressed:
-                    _isLoading
-                        ? null
-                        : () async {
-                          if (!await _hasInternet()) {
-                            AlertHelper.showAlert(
-                              'Sin conexión a internet\nActiva tus datos o Wi-Fi para iniciar sesión.',
-                              type: AlertType.warning,
-                            );
-                            return;
-                          }
-                          _handleLogin();
-                        },
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        if (!await _hasInternet()) {
+                          AlertHelper.showAlert(
+                            'Sin conexión a internet\nActiva tus datos o Wi-Fi para iniciar sesión.',
+                            type: AlertType.warning,
+                          );
+                          return;
+                        }
+                        _handleLogin();
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
@@ -503,19 +502,22 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   elevation: 0,
                 ),
-                child:
-                    _isLoading
-                        ? const CircularProgressIndicator(
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
                           color: Colors.white,
-                          strokeWidth: 3,
-                        )
-                        : const Text(
-                          'Iniciar sesión',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          strokeWidth: 2.5,
                         ),
+                      )
+                    : const Text(
+                        'Iniciar sesión',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
             ),
 
@@ -675,10 +677,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   fontSize: 15,
                 ),
               ),
-
             ),
           ),
-                        const SizedBox(height: 15),
+          const SizedBox(height: 15),
         ],
       ),
     );

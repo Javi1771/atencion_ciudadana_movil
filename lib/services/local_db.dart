@@ -8,25 +8,26 @@ import 'package:path/path.dart';
 ///* =======================
 class LocalDb {
   static Database? _db;
-  static const int _dbVersion = 2; 
+  static const int _dbVersion = 3; //* subimos a 3 para aplicar migración
 
   static Future<Database> get instance async {
     if (_db != null) return _db!;
     final path = join(await getDatabasesPath(), 'atencion_ciudadana.db');
-    print('[LocalDb] Abriendo base de datos en: $path');
+    //? print('[LocalDb] Abriendo base de datos en: $path');
 
     _db = await openDatabase(
       path,
       version: _dbVersion,
       onCreate: (db, _) async {
-        print('[LocalDb] onCreate v$_dbVersion');
+        //? print('[LocalDb] onCreate v$_dbVersion');
         await _createIncidencias(db);
         await _createCiudadanos(db);
       },
       onUpgrade: (db, oldV, newV) async {
-        print('[LocalDb] onUpgrade $oldV -> $newV');
+        //? print('[LocalDb] onUpgrade $oldV -> $newV');
+
+        //* v1 -> v2: crear tabla ciudadanos (por compatibilidad)
         if (oldV < 2) {
-          //* Migración v1 -> v2: crear la nueva tabla ciudadanos
           await _createCiudadanos(db);
         }
       },
@@ -37,7 +38,7 @@ class LocalDb {
 
   //? --- Tabla incidencias (ya existente) ---
   static Future<void> _createIncidencias(Database db) async {
-    print('[LocalDb] Creando tabla "incidencias" (si no existe)');
+    //? print('[LocalDb] Creando tabla "incidencias" (si no existe)');
     await db.execute('''
       CREATE TABLE IF NOT EXISTS incidencias (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,7 +57,7 @@ class LocalDb {
 
   //* --- NUEVA tabla ciudadanos ---
   static Future<void> _createCiudadanos(Database db) async {
-    print('[LocalDb] Creando tabla "ciudadanos" (si no existe)');
+    //? print('[LocalDb] Creando tabla "ciudadanos" (si no existe)');
     await db.execute('''
       CREATE TABLE IF NOT EXISTS ciudadanos (
         id_ciudadano     INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,19 +66,17 @@ class LocalDb {
         segundo_apellido TEXT,
         nombre_completo  TEXT,
         curp_ciudadano   TEXT,
-        fecha_nacimiento TEXT,       
+        fecha_nacimiento TEXT,
         password         TEXT,
-        sexo             TEXT,       
-        estado           TEXT,       
+        sexo             TEXT,
+        estado           TEXT,
         telefono         TEXT,
         email            TEXT,
-        asentamiento     TEXT,       
+        asentamiento     TEXT,
         calle            TEXT,
         numero_exterior  TEXT,
         numero_interior  TEXT,
-        codigo_postal    TEXT,
-        created_at       TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-        updated_at       TEXT
+        codigo_postal    TEXT
       )
     ''');
 
@@ -99,16 +98,15 @@ class IncidenceLocalRepo {
   static Future<int> save(Map<String, dynamic> data) async {
     final db = await LocalDb.instance;
     final id = await db.insert('incidencias', data);
-    print('[IncidenceLocalRepo] Guardada incidencia id=$id → $data');
+    //? print('[IncidenceLocalRepo] Guardada incidencia id=$id → $data');
     return id;
-    //* Devuelve el ID insertado (petición del usuario: "devolver respuestas")
   }
 
   ///* Devuelve todos los registros
   static Future<List<Map<String, dynamic>>> pending() async {
     final db = await LocalDb.instance;
     final rows = await db.query('incidencias', orderBy: 'id DESC');
-    print('[IncidenceLocalRepo] Pendientes: ${rows.length}');
+    //? print('[IncidenceLocalRepo] Pendientes: ${rows.length}');
     return rows;
   }
 
@@ -125,7 +123,7 @@ class IncidenceLocalRepo {
     final db = await LocalDb.instance;
     final count =
         await db.update('incidencias', data, where: 'id = ?', whereArgs: [id]);
-    print('[IncidenceLocalRepo] Actualizados $count para id=$id → $data');
+    //? print('[IncidenceLocalRepo] Actualizados $count para id=$id → $data');
     return count;
   }
 
@@ -139,7 +137,7 @@ class IncidenceLocalRepo {
     final db = await LocalDb.instance;
     final count =
         await db.delete('incidencias', where: 'id = ?', whereArgs: [id]);
-    print('[IncidenceLocalRepo] Eliminados: $count (id=$id)');
+    //? print('[IncidenceLocalRepo] Eliminados: $count (id=$id)');
     return count;
   }
 }
@@ -164,54 +162,69 @@ class CitizenLocalRepo {
             ? data['nombre_completo']
             : [nombre, pApe, sApe].where((e) => e.isNotEmpty).join(' ').trim();
 
-    data['updated_at'] = DateTime.now().toUtc().toIso8601String();
-
-    final id = await db.insert(_table, data,
-        conflictAlgorithm: ConflictAlgorithm.replace);
-    print('[CitizenLocalRepo] Insertado id=$id → $data');
+    final id = await db.insert(
+      _table,
+      data,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    //? print('[CitizenLocalRepo] Insertado id=$id → $data');
     return id; //* devuelve id insertado
   }
 
   ///* Listar todos
   static Future<List<Map<String, dynamic>>> all() async {
     final db = await LocalDb.instance;
-    final rows = await db.query(_table, orderBy: 'updated_at DESC');
-    print('[CitizenLocalRepo] Registros: ${rows.length}');
+    final rows = await db.query(_table, orderBy: 'id_ciudadano DESC');
+    //? print('[CitizenLocalRepo] Registros: ${rows.length}');
     return rows;
   }
 
   ///* Buscar por id_ciudadano
   static Future<Map<String, dynamic>?> findById(int idCiudadano) async {
     final db = await LocalDb.instance;
-    final res = await db.query(_table,
-        where: 'id_ciudadano = ?', whereArgs: [idCiudadano], limit: 1);
+    final res = await db.query(
+      _table,
+      where: 'id_ciudadano = ?',
+      whereArgs: [idCiudadano],
+      limit: 1,
+    );
     return res.isNotEmpty ? res.first : null;
   }
 
   ///* Buscar por CURP
   static Future<Map<String, dynamic>?> findByCurp(String curp) async {
     final db = await LocalDb.instance;
-    final res = await db.query(_table,
-        where: 'curp_ciudadano = ?', whereArgs: [curp], limit: 1);
+    final res = await db.query(
+      _table,
+      where: 'curp_ciudadano = ?',
+      whereArgs: [curp],
+      limit: 1,
+    );
     return res.isNotEmpty ? res.first : null;
   }
 
   ///? Actualizar por id_ciudadano
   static Future<int> update(int idCiudadano, Map<String, dynamic> data) async {
     final db = await LocalDb.instance;
-    data['updated_at'] = DateTime.now().toUtc().toIso8601String();
-    final count = await db.update(_table, data,
-        where: 'id_ciudadano = ?', whereArgs: [idCiudadano]);
-    print('[CitizenLocalRepo] Actualizados $count para id=$idCiudadano → $data');
+    final count = await db.update(
+      _table,
+      data,
+      where: 'id_ciudadano = ?',
+      whereArgs: [idCiudadano],
+    );
+    //? print('[CitizenLocalRepo] Actualizados $count para id=$idCiudadano → $data');
     return count;
   }
 
   ///! Eliminar por id_ciudadano
   static Future<int> delete(int idCiudadano) async {
     final db = await LocalDb.instance;
-    final count =
-        await db.delete(_table, where: 'id_ciudadano = ?', whereArgs: [idCiudadano]);
-    print('[CitizenLocalRepo] Eliminados: $count (id=$idCiudadano)');
+    final count = await db.delete(
+      _table,
+      where: 'id_ciudadano = ?',
+      whereArgs: [idCiudadano],
+    );
+    //? print('[CitizenLocalRepo] Eliminados: $count (id=$idCiudadano)');
     return count;
   }
 

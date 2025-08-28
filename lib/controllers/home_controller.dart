@@ -155,8 +155,8 @@ class HomeController extends ChangeNotifier {
         body: jsonEncode(payload),
       );
 
-      debugPrint('🌐 Status: ${response.statusCode}');
-      debugPrint('📦 Body: ${response.body.trim()}');
+      //? debugPrint('🌐 Status: ${response.statusCode}');
+      //? debugPrint('📦 Body: ${response.body.trim()}');
 
       bool ok = false;
       String msg = 'Error en servidor';
@@ -190,7 +190,7 @@ class HomeController extends ChangeNotifier {
       }
     } catch (e) {
       AlertHelper.showAlert('Error de red: Revisa tu conexión a internet', type: AlertType.error);
-      debugPrint('🚨 Upload error: $e');
+      //? debugPrint('🚨 Upload error: $e');
     } finally {
       _isUploading = false;
       notifyListeners();

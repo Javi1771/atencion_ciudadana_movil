@@ -421,7 +421,7 @@ class _CitizenDetailEditSheetState extends State<CitizenDetailEditSheet> with Si
               flex: 2,
               child: _buildEditField(
                 controller: curpCtrl,
-                label: 'CURP (Opcional)',
+                label: 'CURP *',
                 icon: Icons.verified_user,
                 inputFormatters: [
                   UpperCaseTextFormatter(),
@@ -481,7 +481,7 @@ class _CitizenDetailEditSheetState extends State<CitizenDetailEditSheet> with Si
         ),
         _buildEditField(
           controller: emailCtrl,
-          label: 'Correo Electrónico',
+          label: 'Correo Electrónico *',
           icon: Icons.email,
           keyboardType: TextInputType.emailAddress,
           validator: (v) {
@@ -710,14 +710,30 @@ class _CitizenDetailEditSheetState extends State<CitizenDetailEditSheet> with Si
 
   Future<void> _saveChanges() async {
     if (!formKey.currentState!.validate()) return;
-    
     setState(() => isSaving = true);
 
     final id = widget.citizen['id_ciudadano'] as int;
+    final newCurp = curpCtrl.text.trim().toUpperCase();
+
+    //* Pre-chequeo para evitar golpear la BD si es duplicado
+    if (newCurp.isNotEmpty &&
+        widget.controller.isDuplicateCurp(newCurp, excludeId: id)) {
+      setState(() => isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Ya existe un ciudadano con esa CURP'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
+
     final payload = <String, dynamic>{
       'nombre': nameCtrl.text.trim().toUpperCase(),
       'primer_apellido': pApeCtrl.text.trim().toUpperCase(),
-      'segundo_apellido': sApeCtrl.text.trim().toUpperCase(), 
+      'segundo_apellido': sApeCtrl.text.trim().toUpperCase(),
       'telefono': telCtrl.text.trim(),
       'email': emailCtrl.text.trim(),
       'asentamiento': asentCtrl.text.trim().toUpperCase(),
@@ -725,7 +741,7 @@ class _CitizenDetailEditSheetState extends State<CitizenDetailEditSheet> with Si
       'numero_exterior': numExtCtrl.text.trim().toUpperCase(),
       'numero_interior': numIntCtrl.text.trim().toUpperCase(),
       'codigo_postal': cpCtrl.text.trim(),
-      'curp_ciudadano': curpCtrl.text.trim().toUpperCase(), 
+      'curp_ciudadano': newCurp.isEmpty ? null : newCurp,
       'fecha_nacimiento': fechaCtrl.text.trim(),
       'estado': estadoCtrl.text.trim().toUpperCase(),
       'sexo': sexoCtrl.text.trim().toUpperCase(),
@@ -733,27 +749,24 @@ class _CitizenDetailEditSheetState extends State<CitizenDetailEditSheet> with Si
 
     try {
       await widget.controller.updateCitizen(id, payload);
-      if (mounted) {
-        Navigator.pop(context, 'updated');
-      }
+      if (mounted) Navigator.pop(context, 'updated');
     } catch (e) {
-      if (mounted) {
-        setState(() => isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(child: Text('Error al actualizar: $e')),
-              ],
-            ),
-            backgroundColor: Colors.redAccent,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            behavior: SnackBarBehavior.floating,
+      if (!mounted) return;
+      setState(() => isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(child: Text(e.toString())),
+            ],
           ),
-        );
-      }
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
     }
   }
 }

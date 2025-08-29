@@ -18,7 +18,7 @@ class CitizenHomeController extends ChangeNotifier {
 
   //* NUEVO: bandera de subida y progreso
   bool _isUploading = false;
-  final double _progress = 0.0;
+  double _progress = 0.0;
 
   //* Getters
   List<Map<String, dynamic>> get citizens => _citizens;
@@ -31,15 +31,14 @@ class CitizenHomeController extends ChangeNotifier {
   bool get isUploading => _isUploading;
   double get progress => _progress;
 
+  void _setProgress(double v) {
+    _progress = v.clamp(0.0, 1.0);
+    notifyListeners();
+  }
+
   //* Estadísticas
   int get totalCitizens => _citizens.length;
-  int get citizensWithCurp => _citizens
-      .where(
-        (c) =>
-            c['curp_ciudadano']?.toString().trim().isNotEmpty == true &&
-            c['curp_ciudadano'].toString().trim().length == 18,
-      )
-      .length;
+  int get citizensWithCurp => _citizens.where(_isValidForUpload).length;
   int get citizensWithoutCurp => totalCitizens - citizensWithCurp;
 
   //? ---------------------------
@@ -254,40 +253,95 @@ class CitizenHomeController extends ChangeNotifier {
     return pat.hasMatch(curp);
   }
 
-  //* Mapea un ciudadano local → objeto JSON esperado por el backend
-  Map<String, dynamic> _toCitizenPayload(Map<String, dynamic> c) {
+  // --- Helpers de saneo para envío ---
+  bool _isSinNumero(String input) {
+    var s = input.toLowerCase().trim();
+    s = s.replaceAll(RegExp(r'[^\w\s/]'), '');
+    s = s.replaceAll('/', '');
+    s = s.replaceAll(RegExp(r'\s+'), ' ');
+    return s == 'sn' ||
+        s == 's n' ||
+        s.contains('sin numero') ||
+        s.contains('sin num') ||
+        s.contains('no numero') ||
+        s.contains('no tengo numero');
+  }
+
+  Map<String, dynamic> _sanitizeForApi(Map<String, dynamic> c) {
     String s(dynamic v) => (v ?? '').toString().trim();
+    String onlyDigits(String v) => v.replaceAll(RegExp(r'[^0-9]'), '');
+
+    final curp = s(c['curp_ciudadano']).replaceAll(' ', '').toUpperCase();
+    final password = s(c['password']).replaceAll(' ', '');
+    final telefono = onlyDigits(s(c['telefono']));
+    String cp = onlyDigits(s(c['codigo_postal']));
+    if (cp.length > 5) cp = cp.substring(0, 5);
+
+    String numExt = s(c['numero_exterior']).toUpperCase();
+    String numInt = s(c['numero_interior']).toUpperCase();
+    if (_isSinNumero(numExt)) numExt = 'SN';
+    if (numInt.isEmpty || _isSinNumero(numInt)) numInt = 'SN';
 
     return {
       'nombre': s(c['nombre']),
       'primer_apellido': s(c['primer_apellido']),
       'segundo_apellido': s(c['segundo_apellido']),
       'nombre_completo': s(c['nombre_completo']),
-      'curp_ciudadano': s(c['curp_ciudadano']).toUpperCase(),
+      'curp_ciudadano': curp,
       'fecha_nacimiento': s(c['fecha_nacimiento']),
-      'password': s(c['password']),
+      'password': password,
       'sexo': s(c['sexo']),
       'estado': s(c['estado']),
-      'telefono': s(c['telefono']),
-      'email': s(c['email']),
+      'telefono': telefono,
+      'email': s(c['email']).toLowerCase(),
       'asentamiento': s(c['asentamiento']),
       'calle': s(c['calle']),
-      'numero_exterior': s(c['numero_exterior']),
-      'numero_interior': s(c['numero_interior']),
-      'codigo_postal': s(c['codigo_postal']),
+      'numero_exterior': numExt,
+      'numero_interior': numInt,
+      'codigo_postal': cp,
     };
   }
 
+  //* Mapea un ciudadano local → objeto JSON esperado por el backend
+  Map<String, dynamic> _toCitizenPayload(Map<String, dynamic> c) =>
+      _sanitizeForApi(c);
+
   ///* Sube a la API **uno a uno**.
   ///* - Filtra válidos y deduplica por CURP.
-  ///* - Envía cada registro por separado (array de 1 elemento, como espera el API).
-  ///* - Si el envío del registro es success=true **o** el server lo reporta como duplicado,
-  ///*   elimina ese ciudadano de la BD local.
-  ///* - Devuelve un resumen agregado (skips/errores/duplicates/trabajadores).
+  ///* - Envía cada registro por separado (array de 1 elemento).
+  ///* - Si success=true o el server lo reporta como duplicado, elimina el local.
+  ///* - Devuelve un resumen agregado.
   Future<Map<String, dynamic>?> uploadCitizensJson({
     List<Map<String, dynamic>>? citizensToUpload,
     String? idempotencyKey,
   }) async {
+    bool looksDuplicateOfThis({
+      required String curpUpper,
+      required List<String> metaDuplicates,
+      required List<dynamic> detailsSkips,
+      required int status,
+      required String rawMsg,
+      required String rawBody,
+    }) {
+      //* normalizamos
+      final dupMeta = metaDuplicates.map((e) => e.toUpperCase()).toSet();
+      final inMeta = dupMeta.contains(curpUpper);
+
+      final inSkips = detailsSkips.any(
+        (s) => s.toString().toUpperCase().contains(curpUpper),
+      );
+
+      //* “duplicad” cubre duplicado/duplicada/duplicadas/duplicados
+      final hayTextoDup = ('$rawMsg $rawBody').toUpperCase();
+      final generic409 =
+          status == 409 &&
+          (hayTextoDup.contains('DUPLICAD') ||
+              hayTextoDup.contains('YA EXISTE'));
+
+      //* Como enviamos UNO A UNO, es seguro tratar 409 como éxito lógico.
+      return inMeta || inSkips || generic409;
+    }
+
     if (_isUploading) {
       print('⏳ [UPLOAD] Ya hay una subida en proceso, cancelando.');
       return {
@@ -298,10 +352,8 @@ class CitizenHomeController extends ChangeNotifier {
       };
     }
 
-    //? 1) Filtra válidos
+    //? 1) Filtra válidos y deduplica
     var toSend = (citizensToUpload ?? _citizens).where(_isValidForUpload);
-
-    //? 2) Dedupe por CURP
     final seen = <String>{};
     toSend = toSend.where(
       (c) =>
@@ -320,7 +372,6 @@ class CitizenHomeController extends ChangeNotifier {
     }
 
     if (listToSend.isEmpty) {
-      print('⚠️ [UPLOAD] No hay ciudadanos válidos para enviar');
       return {
         'success': false,
         'message': 'No hay ciudadanos con CURP válida para subir',
@@ -332,11 +383,10 @@ class CitizenHomeController extends ChangeNotifier {
       };
     }
 
-    //? 3) Token
+    //? 2) Token
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token') ?? '';
     if (token.isEmpty) {
-      print('❌ [UPLOAD] Token no encontrado');
       return {
         'success': false,
         'message': 'Token no encontrado. Inicia sesión.',
@@ -349,25 +399,27 @@ class CitizenHomeController extends ChangeNotifier {
     }
 
     _isUploading = true;
+    _setProgress(0.0);
     notifyListeners();
 
     final uri = Uri.parse(
       'https://sanjuandelrio.gob.mx/tramites-sjr/Api/principal/cargar_usuarios_app',
     );
 
-    //? 4) Acumuladores de resultado
+    //? 3) Acumuladores
     final List<dynamic> aggregatedSkips = [];
     final List<dynamic> aggregatedErrs = [];
     final List<String> aggregatedDuplicates = [];
     final List<String> aggregatedTrabajadores = [];
     int sentOk = 0;
-    int total = listToSend.length;
+    final int total = listToSend.length;
 
     print('🚀 [UPLOAD] Envío UNO A UNO a: $uri');
     print('🔑 [UPLOAD] Token (recortado): ${token.substring(0, 10)}...');
 
-    //? 5) Itera y envía de uno en uno
-    for (final citizen in listToSend) {
+    //? 4) Envío uno a uno
+    for (int i = 0; i < listToSend.length; i++) {
+      final citizen = listToSend[i];
       final payloadSingle = [_toCitizenPayload(citizen)];
       final curpUpper = citizen['curp_ciudadano']
           .toString()
@@ -379,7 +431,6 @@ class CitizenHomeController extends ChangeNotifier {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       };
-      //* Idempotency por registro (si te pasan uno global, lo especializamos)
       if (idempotencyKey != null && idempotencyKey.isNotEmpty) {
         headers['Idempotency-Key'] = '$idempotencyKey:$curpUpper';
       }
@@ -393,8 +444,10 @@ class CitizenHomeController extends ChangeNotifier {
           body: jsonEncode(payloadSingle),
         );
 
-        print('🌐 [UPLOAD:$curpUpper] Status: ${resp.statusCode}');
-        print('🌐 [UPLOAD:$curpUpper] Body: ${resp.body}');
+        final status = resp.statusCode;
+        final rawBody = resp.body;
+        print('🌐 [UPLOAD:$curpUpper] Status: $status');
+        print('🌐 [UPLOAD:$curpUpper] Body: $rawBody');
 
         bool ok = false;
         String msg = 'Error en servidor';
@@ -404,7 +457,7 @@ class CitizenHomeController extends ChangeNotifier {
         List<String> trabajadores = [];
 
         try {
-          final js = jsonDecode(resp.body);
+          final js = jsonDecode(rawBody);
           ok = js['success'] == true;
           msg = js['message']?.toString() ?? msg;
           skips = (js['details']?['skips'] ?? []) as List<dynamic>;
@@ -413,40 +466,40 @@ class CitizenHomeController extends ChangeNotifier {
               .cast<String>();
           trabajadores = ((js['meta']?['trabajadores'] ?? []) as List)
               .cast<String>();
-
-          print('📥 [UPLOAD:$curpUpper] ok=$ok, msg=$msg');
-          print('   skips=$skips');
-          print('   errores=$errs');
-          print('   duplicates=$duplicates');
-          print('   trabajadores=$trabajadores');
         } catch (e) {
-          print('⚠️ [UPLOAD:$curpUpper] Error parseando respuesta: $e');
-          //! fallback: si el server devuelve texto, lo guardamos como error
-          aggregatedErrs.add('[$curpUpper] ${resp.body.trim()}');
+          //! Si no es JSON, dejamos msg por defecto y tratamos el texto crudo
+          msg = msg;
         }
 
-        //* Acumular detalles
+        //* acumular
         aggregatedSkips.addAll(skips);
         aggregatedErrs.addAll(errs);
         aggregatedDuplicates.addAll(duplicates.map((d) => d.toUpperCase()));
         aggregatedTrabajadores.addAll(trabajadores.map((t) => t.toUpperCase()));
 
-        //* Éxito por registro si:
-        //* - success==true, o
-        //* - el server reporta el CURP de este registro en "duplicates"
-        final isDuplicateOfThis =
-            aggregatedDuplicates.contains(curpUpper) ||
-            duplicates.contains(curpUpper);
+        final dupOfThis = looksDuplicateOfThis(
+          curpUpper: curpUpper,
+          metaDuplicates: duplicates,
+          detailsSkips: skips,
+          status: status,
+          rawMsg: msg,
+          rawBody: rawBody,
+        );
 
-        if (ok || isDuplicateOfThis) {
-          //! Eliminar local
+        //! 401/403: token inválido → no borrar, informar y salir del bucle
+        if (status == 401 || status == 403) {
+          aggregatedErrs.add('[$curpUpper] Token inválido o expirado');
+          //* Rompemos para no seguir gastando requests con token malo.
+          break;
+        }
+
+        if (ok || dupOfThis) {
           if (idLocal != null) {
             await CitizenLocalRepo.delete(idLocal);
             print('🗑️ [UPLOAD:$curpUpper] Eliminado local id=$idLocal');
           }
           sentOk++;
         } else {
-          //! No se elimina, queda pendiente.
           print(
             '⚠️ [UPLOAD:$curpUpper] No se eliminó local (fallo o pendiente).',
           );
@@ -454,20 +507,23 @@ class CitizenHomeController extends ChangeNotifier {
       } catch (e) {
         print('🚨 [UPLOAD:$curpUpper] Error de red: $e');
         aggregatedErrs.add('[$curpUpper] Error de red');
+      } finally {
+        _setProgress((i + 1) / total);
       }
     }
 
-    //? 6) Refrescar lista local tras iteración
+    //* refrescar local
     await loadCitizens();
 
     _isUploading = false;
+    _setProgress(0.0);
     notifyListeners();
 
-    //? 7) Componer mensaje/estado final
-    final allWereDuplicates =
+    //* mensaje final
+    final bool allWereDuplicates =
         sentOk == 0 &&
         aggregatedErrs.isEmpty &&
-        aggregatedDuplicates.length == total;
+        aggregatedDuplicates.length == listToSend.length;
 
     bool finalSuccess = false;
     String finalMsg = '';
@@ -478,6 +534,11 @@ class CitizenHomeController extends ChangeNotifier {
     } else if (allWereDuplicates) {
       finalSuccess = true;
       finalMsg = 'Ya estaban registrados, sincronizado.';
+    } else if (aggregatedErrs.any(
+      (e) => e.toString().contains('Token inválido'),
+    )) {
+      finalSuccess = false;
+      finalMsg = 'Token inválido o expirado. Inicia sesión nuevamente.';
     } else {
       finalSuccess = false;
       finalMsg = 'No se pudieron subir los registros.';

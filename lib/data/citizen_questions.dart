@@ -209,8 +209,13 @@ class CitizenQuestions {
         'options': null,
         'skipOption': false,
         'validator': (String value) {
-          if (value.trim().length < 8) {
-            return 'La contraseña debe tener al menos 8 caracteres';
+          //! Sin espacios (en todo el string, no solo al inicio/fin)
+          final noSpaces = value.replaceAll(RegExp(r'\s+'), '');
+          if (noSpaces.length < 8) {
+            return 'La contraseña debe tener al menos 8 caracteres (sin espacios)';
+          }
+          if (noSpaces != value) {
+            return 'La contraseña no debe contener espacios';
           }
           return null;
         },
@@ -504,6 +509,12 @@ class CitizenQuestions {
       }
     }
 
+    //* Password → sin espacios (no se cambia a mayúsculas)
+    if (prepared['password'] != null &&
+        prepared['password'].toString().isNotEmpty) {
+      prepared['password'] =
+          prepared['password'].toString().replaceAll(RegExp(r'\s+'), '');
+    }
     return prepared;
   }
 

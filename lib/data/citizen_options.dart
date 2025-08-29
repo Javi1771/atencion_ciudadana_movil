@@ -98,6 +98,12 @@ class CitizenOptions {
     'michoacan': 'Michoacán',
     'yucatan': 'Yucatán',
     'leon': 'Nuevo León',
+    'estado de mexico': 'Estado de México',
+    'ciudad de mexico': 'Ciudad de México',
+    'nuevo leon': 'Nuevo León',
+    'edo mex': 'Estado de México',
+    'edo. mex.': 'Estado de México',
+    'edomex': 'Estado de México',
 
     //? Email símbolos
     'arroba': '@',

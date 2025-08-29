@@ -198,8 +198,14 @@ class CurpValidator {
       'GE': 'G',
       'PE': 'P',
       'TE': 'T',
-      'VE': 'V',
+      'VE': 'B',
       'UVE': 'V',
+      'ELE': 'L',
+      'ERE': 'R',
+      'ESE': 'S',
+      'EFE': 'F',
+      'EME': 'M',
+      'ENE': 'N',
     };
     return mapping[token];
   }
@@ -258,7 +264,7 @@ class CurpValidator {
     final Map<String, String> single = {
       //? Letras básicas
       'A': 'A',
-      'BE': 'B', 'B': 'B',
+      'BE': 'B', 'B': 'B', 'VE': 'B',
       'CE': 'C', 'C': 'C',
       'DE': 'D', 'D': 'D',
       'E': 'E',
@@ -280,7 +286,7 @@ class CurpValidator {
       'TE': 'T', 'T': 'T',
       'U': 'U',
       //? V con todas sus variantes
-      'VE': 'V', 'UVE': 'V', 'V': 'V', 'UVE': 'V',
+      'UVE': 'V', 'V': 'V', 'UVE': 'V',
       'W': 'W', 'DOBLEVE': 'W', 'DOBLEUVE': 'W', 'DOBLEU': 'W', 'DOUBLEU': 'W',
       'EQUIS': 'X', 'X': 'X', 'EKIS': 'X',
       'YE': 'Y', 'IGRIEGA': 'Y', 'Y': 'Y',

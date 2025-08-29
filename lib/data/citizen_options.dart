@@ -104,6 +104,9 @@ class CitizenOptions {
     'edo mex': 'Estado de México',
     'edo. mex.': 'Estado de México',
     'edomex': 'Estado de México',
+    'Estado de Estado de México': 'Estado de México',
+    'Ciudad de Ciudad de México': 'Ciudad de México',
+    'Nuevo Nuevo León': 'Nuevo León',
 
     //? Email símbolos
     'arroba': '@',

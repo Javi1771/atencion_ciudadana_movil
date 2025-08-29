@@ -146,7 +146,7 @@ class _CitizenReviewScreenState extends State<CitizenReviewScreen> {
 
       //? 5) Feedback
       await _speak(
-        '¡Excelente! Su registro de ciudadano ha sido completado correctamente. Ya puede usar sus credenciales para acceder al sistema.',
+        '¡Excelente! Su registro de ciudadano ha sido completado correctamente. Ya puede usar sus credenciales para acceder a la Clave Única.',
       );
 
       AlertHelper.showAlert(

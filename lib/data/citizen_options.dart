@@ -1,9 +1,15 @@
 // lib/data/citizen_options.dart
 
+class SexoOption {
+  final String value; //* H o M
+  final String label; //* Hombre o Mujer
+  const SexoOption(this.value, this.label);
+}
+
 class CitizenOptions {
-  static List<String> sexos = [
-    'Masculino',
-    'Femenino',
+  static List<SexoOption> sexos = [
+    SexoOption('H', 'Hombre'),
+    SexoOption('M', 'Mujer'),
   ];
 
   static List<String> estados = [
@@ -57,7 +63,7 @@ class CitizenOptions {
   static Map<String, String> voiceCorrections = {
     //? Números que se confunden
     'uno': '1',
-    'dos': '2', 
+    'dos': '2',
     'tres': '3',
     'cuatro': '4',
     'cinco': '5',
@@ -66,16 +72,23 @@ class CitizenOptions {
     'ocho': '8',
     'nueve': '9',
     'cero': '0',
-    
-    //? Sexo
-    'hombre': 'Masculino',
-    'mujer': 'Femenino',
-    'varón': 'Masculino',
-    'dama': 'Femenino',
-    'caballero': 'Masculino',
-    'señora': 'Femenino',
-    'señorita': 'Femenino',
-    
+
+    //? Sexo (corrección → valor real H/M)
+    'hombre': 'H',
+    'varón': 'H',
+    'caballero': 'H',
+    'mujer': 'M',
+    'dama': 'M',
+    'señora': 'M',
+    'señorita': 'M',
+    'fémina': 'M',
+    'hembra': 'M',
+    'macho': 'H',
+    'masculino': 'H',
+    'femenino': 'M',
+    'femenina': 'M',
+    'masculina': 'H',
+
     //? Estados que se confunden por voz
     'méxico': 'Estado de México',
     'cdmx': 'Ciudad de México',
@@ -85,7 +98,7 @@ class CitizenOptions {
     'michoacan': 'Michoacán',
     'yucatan': 'Yucatán',
     'leon': 'Nuevo León',
-    
+
     //? Email símbolos
     'arroba': '@',
     'punto': '.',

@@ -1,24 +1,25 @@
+// utils/voice_utils.dart
 // ignore_for_file: avoid_print
 
 class VoiceUtils {
   ///* Busca la mejor coincidencia entre un input y una lista de opciones (robusto/fonético).
   static String? findBestMatch(String input, List<String> options) {
-    //? print('\n--- BUSCANDO COINCIDENCIA ---');
-    //? print('Input: "$input"');
+    print('\n--- BUSCANDO COINCIDENCIA ---');
+      print('Input: "$input"');
 
     final raw = input.trim();
     if (raw.isEmpty) {
-      //? print('❌ Input vacío');
+        print('❌ Input vacío');
       return null;
     }
 
     final cleanInput = _normalizeBasic(raw);
-    //? print('Input limpiado: "$cleanInput"');
+      print('Input limpiado: "$cleanInput"');
 
     //? 0) Coincidencia exacta (ignorando mayúsculas/acentos)
     for (final option in options) {
       if (_normalizeBasic(option) == cleanInput) {
-        //? print('✅ Coincidencia exacta (básica): $option');
+        print('✅ Coincidencia exacta (básica): $option');
         return option;
       }
     }
@@ -27,7 +28,7 @@ class VoiceUtils {
     final inputAgg = _normalizeAggressive(cleanInput);
     for (final option in options) {
       if (_normalizeAggressive(_normalizeBasic(option)) == inputAgg) {
-        //? print('✅ Coincidencia exacta (agresiva): $option');
+        print('✅ Coincidencia exacta (agresiva): $option');
         return option;
       }
     }
@@ -37,7 +38,7 @@ class VoiceUtils {
     if (options.any((opt) => opt.toUpperCase().contains('SECRETARIA'))) {
       final sec = _findSecretariaMatch(cleanInput, options);
       if (sec != null) {
-        //? print('✅ Coincidencia en secretaría: $sec');
+        print('✅ Coincidencia en secretaría: $sec');
         return sec;
       }
     }
@@ -45,7 +46,7 @@ class VoiceUtils {
     if (options.length >= 50) {
       final col = _findColoniaMatch(cleanInput, options);
       if (col != null) {
-        //? print('✅ Coincidencia en colonia (heurística): $col');
+        print('✅ Coincidencia en colonia (heurística): $col');
         return col;
       }
     }
@@ -83,7 +84,7 @@ class VoiceUtils {
     //* Umbrales: si es suficientemente parecido, aceptamos
     //* - Score >= 0.82 funciona excelente para casos "CASADERO" ~ "CAZADERO"
     if (bestOption != null && bestScore >= 0.82) {
-      //? print('✅ Coincidencia difusa: $bestOption (score: ${bestScore.toStringAsFixed(3)})');
+      print('✅ Coincidencia difusa: $bestOption (score: ${bestScore.toStringAsFixed(3)})');
       return bestOption;
     }
 
@@ -91,12 +92,12 @@ class VoiceUtils {
     for (final option in options) {
       final o = _normalizeBasic(option);
       if (cleanInput.contains(o) || o.contains(cleanInput)) {
-        //? print('✅ Coincidencia por contención: $option');
+        print('✅ Coincidencia por contención: $option');
         return option;
       }
     }
 
-    //? print('❌ No se encontró coincidencia');
+    print('❌ No se encontró coincidencia');
     return null;
   }
 
@@ -211,7 +212,7 @@ class VoiceUtils {
     String cleaned = text.trim().toUpperCase();
     if (fieldType == 'curp') {
       cleaned = cleaned.replaceAll(' ', '');
-      //? print('Texto sin espacios para $fieldType: "$cleaned"');
+      print('Texto sin espacios para $fieldType: "$cleaned"');
     }
     return cleaned;
   }
@@ -229,43 +230,43 @@ class VoiceUtils {
     bool allowSkip = false,
     String? Function(String)? validator,
   }) {
-    //? print('\n=== PROCESANDO ENTRADA DE VOZ ===');
-    //? print('Texto transcrito: "$transcribedText"');
-    //? print('Tipo de campo: $fieldType');
+    print('\n=== PROCESANDO ENTRADA DE VOZ ===');
+    print('Texto transcrito: "$transcribedText"');
+    print('Tipo de campo: $fieldType');
 
     if (transcribedText.isEmpty) {
-      //? print('Texto vacío');
+      print('Texto vacío');
       return VoiceProcessResult.empty();
     }
 
     if (allowSkip && shouldSkip(transcribedText)) {
-      //? print('Usuario eligió omitir');
+      print('Usuario eligió omitir');
       return VoiceProcessResult.skipped();
     }
 
     String cleanedText = cleanTranscribedText(transcribedText, fieldType);
-    //? print('Texto limpiado: "$cleanedText"');
+    print('Texto limpiado: "$cleanedText"');
 
     if (validator != null) {
-      //? print('Ejecutando validador...');
+      print('Ejecutando validador...');
       final validationError = validator(cleanedText);
       if (validationError != null) {
-        //? print('❌ Error de validación: $validationError');
+        print('❌ Error de validación: $validationError');
         return VoiceProcessResult.error(validationError);
       }
-      //? print('✅ Validación exitosa');
+      print('✅ Validación exitosa');
     }
 
     String finalValue = cleanedText;
 
     if (options != null && options.isNotEmpty) {
-      //? print('Buscando coincidencia en ${options.length} opciones...');
+      print('Buscando coincidencia en ${options.length} opciones...');
       final matchedOption = findBestMatch(cleanedText, options);
       if (matchedOption != null) {
-        //? print('✅ Opción encontrada: $matchedOption');
+        print('✅ Opción encontrada: $matchedOption');
         finalValue = matchedOption;
       } else {
-        //? print('⚠️ No se encontró coincidencia, usando texto original');
+        print('⚠️ No se encontró coincidencia, usando texto original');
         if (fieldType == 'colonia' || fieldType == 'secretaria') {
           return VoiceProcessResult.error(
             'No se encontró esa opción. ${_getSuggestionText(fieldType, options)}',
@@ -274,8 +275,8 @@ class VoiceUtils {
       }
     }
 
-    //? print('✅ Valor final: "$finalValue"');
-    //? print('=====================================\n');
+    print('✅ Valor final: "$finalValue"');
+    print('=====================================\n');
     return VoiceProcessResult.success(finalValue);
   }
 

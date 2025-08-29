@@ -1,13 +1,14 @@
 // lib/data/citizen_questions.dart
 
 import 'package:app_atencion_ciudadana/data/citizen_options.dart';
+import 'package:app_atencion_ciudadana/data/menu_options.dart';
 import 'package:app_atencion_ciudadana/utils/curp_validator.dart';
 import 'package:app_atencion_ciudadana/utils/citizen_voice_utils.dart';
 
 class CitizenQuestions {
-  // ===========================================================
-  // PREGUNTAS
-  // ===========================================================
+  //? ===========================================================
+  //? PREGUNTAS
+  //? ===========================================================
   static List<Map<String, dynamic>> getQuestions() {
     return [
       {
@@ -71,9 +72,10 @@ class CitizenQuestions {
       },
       {
         'field': 'sexo',
-        'question':
-            'Indique su sexo: ${CitizenVoiceUtils.generateOptionsText(CitizenOptions.sexos, 'sexo')}',
-        'options': CitizenOptions.sexos,
+        'question': 'Indique su sexo',
+        'options': CitizenOptions.sexos
+            .map((s) => {'value': s.value, 'label': s.label})
+            .toList(),
         'skipOption': false,
         'validator': null,
         'isConditional': false,
@@ -124,11 +126,18 @@ class CitizenQuestions {
         'field': 'asentamiento',
         'question':
             'Dígame el nombre de su colonia o asentamiento donde vive.',
-        'options': null,
+        'options': MenuOptions.colonias
+            .map((c) => {'value': c, 'label': c})
+            .toList(),
         'skipOption': false,
         'validator': (String value) {
           if (value.trim().length < 3) {
             return 'El asentamiento debe tener al menos 3 caracteres';
+          }
+          if (!MenuOptions.colonias
+              .map((c) => c.toUpperCase())
+              .contains(value.trim().toUpperCase())) {
+            return 'Debe seleccionar una colonia válida de la lista';
           }
           return null;
         },
@@ -149,16 +158,31 @@ class CitizenQuestions {
       },
       {
         'field': 'numero_exterior',
-        'question': 'Dígame el número exterior de su domicilio.',
+        'question':
+            'Dígame el número exterior de su domicilio. Si no tiene, diga "sin número".',
         'options': null,
         'skipOption': false,
-        'validator': null,
+        'validator': (String value) {
+          final v = value.trim();
+          if (v.isEmpty) return 'El número exterior es requerido';
+
+          //* Acepta "sin número" / "s/n" / "sn"
+          if (_isSinNumero(v)) return null;
+
+          //* Solo dígitos
+          if (RegExp(r'^\d+$').hasMatch(v)) return null;
+
+          //* Alfanumérico típico de direcciones (12B, A-3, 4/2, etc.)
+          if (RegExp(r'^[0-9A-Za-z\s\-/]+$').hasMatch(v)) return null;
+
+          return 'Número exterior inválido';
+        },
         'isConditional': false,
       },
       {
         'field': 'numero_interior',
         'question':
-            'Si tiene número interior, departamento o letra, por favor dígalo. Si no tiene, puede decir "omitir".',
+            'Si tiene número interior, departamento o letra, por favor dígalo. Si no tiene, puede decir "omitir" o "sin número".',
         'options': null,
         'skipOption': true,
         'validator': null,
@@ -181,12 +205,12 @@ class CitizenQuestions {
       {
         'field': 'password',
         'question':
-            'Para finalizar, cree una contraseña para su cuenta. Debe tener al menos 6 caracteres. Por seguridad, dígala letra por letra y número por número.',
+            'Para finalizar, cree una contraseña para su cuenta. Debe tener al menos 8 caracteres. Incluya letras, números y un símbolo.',
         'options': null,
         'skipOption': false,
         'validator': (String value) {
-          if (value.trim().length < 6) {
-            return 'La contraseña debe tener al menos 6 caracteres';
+          if (value.trim().length < 8) {
+            return 'La contraseña debe tener al menos 8 caracteres';
           }
           return null;
         },
@@ -195,9 +219,9 @@ class CitizenQuestions {
     ];
   }
 
-  // ===========================================================
-  // ETIQUETAS
-  // ===========================================================
+  //? ===========================================================
+  //? ETIQUETAS
+  //? ===========================================================
   static Map<String, String> getFieldLabels() {
     return {
       'nombre': 'Nombre',
@@ -218,12 +242,9 @@ class CitizenQuestions {
     };
   }
 
-  // ===========================================================
-  // NAVEGACIÓN DE PREGUNTAS
-  // Bloquea avance sin respuesta válida.
-  // Permite omitir cuando skipOption = true (omite, saltar, etc.)
-  // y evita el bucle guardando una marca de omitido y limpiando el valor.
-  // ===========================================================
+  //? ===========================================================
+  //? NAVEGACIÓN DE PREGUNTAS
+  //? ===========================================================
   static int getNextQuestionIndex(
     List<Map<String, dynamic>> questions,
     int currentIndex,
@@ -240,28 +261,21 @@ class CitizenQuestions {
     final dynamic raw = formData[field];
     final String value = (raw == null) ? '' : raw.toString().trim();
 
-    // Si ya estaba marcado como saltado previamente, respétalo
     final prevSkipMap = formData['__skipped__'];
     final bool wasSkippedBefore =
         (prevSkipMap is Map && prevSkipMap[field] == true);
 
-    // Detecta intención de omitir (palabras clave + variantes)
     final bool saysSkipNow = _wantsToSkip(field, value, skipOption);
-
-    // Decisión final de omitir
     final bool wantsSkip = wasSkippedBefore || saysSkipNow;
 
-    // Si omite, marcamos y limpiamos el campo para que no re-entre en bucle
     if (wantsSkip) {
       _markFieldAsSkipped(formData, field);
     }
 
-    // Si no omitió y está vacío -> no avanzamos
     if (!wantsSkip && value.isEmpty) {
       return currentIndex;
     }
 
-    // Validar (solo si NO omitió)
     final validator = curr['validator'];
     if (!wantsSkip && validator is String? Function(String)) {
       final String? err = validator(value);
@@ -270,7 +284,6 @@ class CitizenQuestions {
       }
     }
 
-    // Siguiente pregunta considerando condicionales
     for (int i = currentIndex + 1; i < questions.length; i++) {
       final q = questions[i];
       final Object? flag = q['isConditional'];
@@ -284,7 +297,6 @@ class CitizenQuestions {
       }
     }
 
-    // No hay más preguntas
     return questions.length;
   }
 
@@ -332,9 +344,9 @@ class CitizenQuestions {
     return count;
   }
 
-  // ===========================================================
-  // VALIDACIONES GLOBALES (requeridos)
-  // ===========================================================
+  //? ===========================================================
+  //? VALIDACIONES GLOBALES (requeridos)
+  //? ===========================================================
   static String? validateRequiredFields(Map<String, dynamic> formData) {
     final requiredFields = [
       'nombre',
@@ -367,9 +379,9 @@ class CitizenQuestions {
     return null;
   }
 
-  // ===========================================================
-  // GENERADORES
-  // ===========================================================
+  //? ===========================================================
+  //? GENERADORES
+  //? ===========================================================
   static String generateFullName(Map<String, dynamic> formData) {
     final nombre = formData['nombre']?.toString().trim() ?? '';
     final p1 = formData['primer_apellido']?.toString().trim() ?? '';
@@ -377,23 +389,23 @@ class CitizenQuestions {
     return [nombre, p1, p2].where((s) => s.isNotEmpty).join(' ').trim();
   }
 
-  // ===========================================================
-  // PREPARACIÓN PARA BD
-  // ===========================================================
+  //? ===========================================================
+  //? PREPARACIÓN PARA BD
+  //? ===========================================================
   static Map<String, dynamic> prepareDataForDatabase(
     Map<String, dynamic> formData,
   ) {
     final prepared = Map<String, dynamic>.from(formData);
 
-    // Normaliza omisiones: si el usuario dijo "omitir" o está marcado como omitido, remueve el campo
+    //* Normaliza omisiones: si el usuario dijo "omitir" o está marcado como omitido
     final skipped = prepared['__skipped__'];
     bool isSkipped(String f) => (skipped is Map && skipped[f] == true);
 
+    //! Eliminar si se omitieron (pero YA NO eliminamos numero_interior: lo pondremos como SN)
     for (final f in [
       'segundo_apellido',
       'curp_ciudadano',
-      'numero_interior',
-      'email'
+      'email',
     ]) {
       final v = prepared[f];
       if (v != null) {
@@ -406,11 +418,11 @@ class CitizenQuestions {
       }
     }
 
-    // Nombre completo → MAYÚSCULAS sin acentos
+    //* Nombre completo → MAYÚSCULAS sin acentos
     prepared['nombre_completo'] =
         _removeDiacritics(generateFullName(prepared).toUpperCase());
 
-    // Teléfono / CP → solo dígitos
+    //* Teléfono / CP → solo dígitos
     if (prepared['telefono'] != null) {
       prepared['telefono'] =
           prepared['telefono'].toString().replaceAll(RegExp(r'[^0-9]'), '');
@@ -420,14 +432,14 @@ class CitizenQuestions {
           prepared['codigo_postal'].toString().replaceAll(RegExp(r'[^0-9]'), '');
     }
 
-    // Email → sin espacios, minúsculas
+    //* Email → sin espacios, minúsculas
     if (prepared['email'] != null &&
         prepared['email'].toString().trim().isNotEmpty) {
       prepared['email'] =
           prepared['email'].toString().replaceAll(' ', '').toLowerCase().trim();
     }
 
-    // Campos texto → MAYÚSCULAS sin acentos (excepto email y password)
+    //* Campos texto → MAYÚSCULAS sin acentos (excepto email y password)
     final textFieldsUpper = <String>[
       'nombre',
       'primer_apellido',
@@ -445,7 +457,7 @@ class CitizenQuestions {
       }
     }
 
-    // CURP: quitar espacios internos y limitar a 18
+    //* CURP: quitar espacios internos y limitar a 18
     if (prepared['curp_ciudadano'] != null) {
       prepared['curp_ciudadano'] = _removeDiacritics(
         prepared['curp_ciudadano']
@@ -459,14 +471,29 @@ class CitizenQuestions {
       }
     }
 
-    // Números exterior/interior:
-    // - solo dígitos → int
-    // - combinación (12B, A-3, etc.) → texto MAYÚSCULAS sin acentos
+    //* "Sin número" → SN
+    //* - Exterior: si dijeron “sin número” lo normalizamos a SN.
+    if (prepared['numero_exterior'] != null &&
+        _isSinNumero(prepared['numero_exterior'].toString())) {
+      prepared['numero_exterior'] = 'SN';
+    }
+
+    //* - Interior: si lo omitieron o dijeron “sin número”, guardamos SN (no lo eliminamos)
+    if (isSkipped('numero_interior') ||
+        (prepared['numero_interior'] != null &&
+            _isSinNumero(prepared['numero_interior'].toString())) ||
+        (prepared['numero_interior'] != null &&
+            prepared['numero_interior'].toString().trim().isEmpty)) {
+      prepared['numero_interior'] = 'SN';
+    }
+
+    //* Números exterior/interior: si son solo dígitos → int; si no, texto en MAYÚSC.
     for (final f in ['numero_exterior', 'numero_interior']) {
       if (prepared[f] != null) {
         final raw = prepared[f].toString().trim();
         if (raw.isEmpty) {
-          prepared.remove(f);
+          //* Para interior ya lo cubrimos (SN); si exterior llega vacío, lo quitamos.
+          if (f == 'numero_exterior') prepared.remove(f);
           continue;
         }
         if (RegExp(r'^\d+$').hasMatch(raw)) {
@@ -480,18 +507,15 @@ class CitizenQuestions {
     return prepared;
   }
 
-  // ===========================================================
-  // HELPERS
-  // ===========================================================
+  //? ===========================================================
+  //? HELPERS
+  //? ===========================================================
 
-  // Marca un campo como omitido y limpia su valor para evitar revalidaciones/re-preguntas.
+  //* Marca un campo como omitido y limpia su valor para evitar revalidaciones/re-preguntas.
   static void _markFieldAsSkipped(Map<String, dynamic> formData, String field) {
-    // Limpia valor si existía
     if (formData.containsKey(field)) {
       formData.remove(field);
     }
-
-    // Guarda una marca de que este campo fue omitido
     final Map<String, bool> skipMap = <String, bool>{};
     final existing = formData['__skipped__'];
     if (existing is Map) {
@@ -503,19 +527,15 @@ class CitizenQuestions {
     formData['__skipped__'] = skipMap;
   }
 
-  // Detecta intención de omitir en múltiples variantes y con limpieza robusta
   static bool _wantsToSkip(String field, String value, bool skipOption) {
     if (!skipOption) return false;
-
     final s = _normalizeForSkip(value);
     if (s.isEmpty) return false;
 
-    // Palabras/expresiones comunes (con límites de palabra)
     final skipRe = RegExp(
         r'(^|\s)(omitir|omite|omito|omitelo|omitela|skip|saltar|salta|saltarlo|saltalo|saltala|ninguno|ninguna|no aplica|na|n a)($|\s)');
     if (skipRe.hasMatch(s)) return true;
 
-    // Negaciones genéricas que implican omitir
     if (s.contains('no tengo') ||
         s.contains('no cuento') ||
         s.contains('no aplica') ||
@@ -526,7 +546,6 @@ class CitizenQuestions {
       return true;
     }
 
-    // Campo-específico
     switch (field) {
       case 'segundo_apellido':
         if (s.contains('sin segundo apellido') ||
@@ -565,11 +584,25 @@ class CitizenQuestions {
     return false;
   }
 
-  // Normaliza para comparación de omisión: minúsculas, sin acentos, sin signos, colapsa espacios
+  //* Detecta “sin número” y variantes comunes (incluye s/n, sn, sin num, etc.)
+  static bool _isSinNumero(String input) {
+    final s = _normalizeForSkip(input);
+    if (s.isEmpty) return false;
+
+    if (s == 'sn' || s == 's n') return true;
+    if (s.contains('sin numero') || s.contains('sin num')) return true;
+    if (s.contains('no numero') || s.contains('no tengo numero')) return true;
+    if (s.contains('s n')) return true;
+
+    return false;
+  }
+
+  //* Normaliza para comparación: minúsculas, sin acentos, sin signos, espacios colapsados
   static String _normalizeForSkip(String v) {
     var s = v.toLowerCase().trim();
     s = _removeDiacritics(s);
-    s = s.replaceAll(RegExp(r'[^\w\s]'), ''); // quita signos
+    s = s.replaceAll(RegExp(r'[^\w\s/]'), ''); 
+    s = s.replaceAll('/', '');                 
     s = s.replaceAll(RegExp(r'\s+'), ' ').trim();
     return s;
   }
@@ -577,14 +610,12 @@ class CitizenQuestions {
   static String _removeDiacritics(String input) {
     const Map<String, String> map = {
       'á': 'a', 'à': 'a','ä': 'a', 'â': 'a',
-      'ã': 'a','å': 'a','Á': 'A','À': 'A','Ä': 'A','Â': 
-      'A','Ã': 'A','Å': 'A','é': 'e','è': 'e','ë': 'e','ê': 
-      'e','É': 'E','È': 'E','Ë': 'E','Ê': 'E','í': 'i','ì': 
-      'i','ï': 'i','î': 'i','Í': 'I','Ì': 'I','Ï': 'I','Î': 
-      'I','ó': 'o','ò': 'o','ö': 'o','ô': 'o','õ': 'o','Ó': 
-      'O','Ò': 'O','Ö': 'O','Ô': 'O','Õ': 'O','ú': 'u','ù': 
-      'u','ü': 'u','û': 'u','Ú': 'U','Ù': 'U','Ü': 'U','Û': 
-      'U','ñ': 'n','Ñ': 'N','ç': 'c','Ç': 'C',
+      'ã': 'a','å': 'a','Á': 'A','À': 'A','Ä': 'A','Â': 'A','Ã': 'A','Å': 'A',
+      'é': 'e','è': 'e','ë': 'e','ê': 'e','É': 'E','È': 'E','Ë': 'E','Ê': 'E',
+      'í': 'i','ì': 'i','ï': 'i','î': 'i','Í': 'I','Ì': 'I','Ï': 'I','Î': 'I',
+      'ó': 'o','ò': 'o','ö': 'o','ô': 'o','õ': 'o','Ó': 'O','Ò': 'O','Ö': 'O','Ô': 'O','Õ': 'O',
+      'ú': 'u','ù': 'u','ü': 'u','û': 'u','Ú': 'U','Ù': 'U','Ü': 'U','Û': 'U',
+      'ñ': 'n','Ñ': 'N','ç': 'c','Ç': 'C',
     };
 
     var out = input;

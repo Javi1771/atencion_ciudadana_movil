@@ -2,6 +2,7 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
 
 import 'dart:async';
+import 'package:app_atencion_ciudadana/data/citizen_options.dart';
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
@@ -196,6 +197,24 @@ class CitizenVoiceController extends ChangeNotifier {
     await _finalizeListeningAndProcess();
   }
 
+  //? ---------------------------
+  //? Validación estricta de CURP
+  //? ---------------------------
+  bool _isValidCurpStrict(String curpRaw) {
+    final curp = curpRaw.trim().toUpperCase();
+    if (curp.length != 18) return false;
+    if (curp.contains(' ')) return false;
+    if (!RegExp(r'^[A-Z0-9]{18}$').hasMatch(curp)) return false;
+
+    //* Patrón con estructura + catálogo de entidades federativas
+    final pat = RegExp(
+      r'^[A-Z]{4}[0-9]{6}[HMX]'
+      r'(AS|BC|BS|CC|CL|CM|CS|CH|DF|DG|GT|GR|HG|JC|MC|MN|MS|NT|NL|OC|PL|QT|QR|SP|SL|SR|TC|TS|TL|VZ|YN|ZS|NE)'
+      r'[A-Z]{3}[A-Z0-9][0-9]$',
+    );
+    return pat.hasMatch(curp);
+  }
+
   //? ============ Silencio / finalización ============
 
   void _kickSilenceTimer() {
@@ -224,27 +243,37 @@ class CitizenVoiceController extends ChangeNotifier {
       await _speech.stop();
     } catch (_) {}
 
-    //* Regla especial para CURP si quedó corta
+    //* Reglas especiales por campo antes de procesar definitivamente
     if (!_isComplete &&
-        _currentQuestion < _questions.length &&
-        (_questions[_currentQuestion]['field'] as String) == 'curp_ciudadano') {
-      final clean = _transcribedText.replaceAll(RegExp(r'[^A-Z0-9]'), '').toUpperCase();
-      if (clean != 'OMITIR' && clean.length < 18) {
-        _processingAnswer = false;
-        await startListening(append: true);
-        return;
-      }
-    }
+        _currentQuestion < _questions.length) {
+      final field = (_questions[_currentQuestion]['field'] as String);
 
-    //* Regla especial para código postal (5 dígitos)
-    if (!_isComplete &&
-        _currentQuestion < _questions.length &&
-        (_questions[_currentQuestion]['field'] as String) == 'codigo_postal') {
-      final numbers = _transcribedText.replaceAll(RegExp(r'[^0-9]'), '');
-      if (numbers.length < 5 && !_transcribedText.toUpperCase().contains('OMITIR')) {
-        _processingAnswer = false;
-        await startListening(append: true);
-        return;
+      //! Regla especial para CURP: continuar si < 18; validar estricta si == 18
+      if (field == 'curp_ciudadano') {
+        final clean = _transcribedText.replaceAll(RegExp(r'[^A-Z0-9]'), '').toUpperCase();
+        if (clean != 'OMITIR' && clean.length < 18) {
+          _processingAnswer = false;
+          await startListening(append: true);
+          return;
+        }
+        if (clean != 'OMITIR' && clean.length == 18 && !_isValidCurpStrict(clean)) {
+          //! CURP con 18 caracteres pero inválida por patrón estricto
+          _processingAnswer = false;
+          await speak('La CURP no es válida. Debe cumplir el formato oficial. Inténtalo nuevamente.');
+          //! Reinicia escucha sin append para evitar arrastrar texto inválido
+          await startListening(append: false);
+          return;
+        }
+      }
+
+      //* Regla especial para código postal (5 dígitos)
+      if (field == 'codigo_postal') {
+        final numbers = _transcribedText.replaceAll(RegExp(r'[^0-9]'), '');
+        if (numbers.length < 5 && !_transcribedText.toUpperCase().contains('OMITIR')) {
+          _processingAnswer = false;
+          await startListening(append: true);
+          return;
+        }
       }
     }
 
@@ -279,6 +308,85 @@ class CitizenVoiceController extends ChangeNotifier {
     } catch (_) {}
   }
 
+  //? ---------------------------
+  //? Normalización de opciones
+  //? ---------------------------
+  //* Devuelve:
+  //*  - optionsForVoice: List<String>? (labels/sinónimos para reconocimiento)
+  //*  - labelToValue: Map<String,String> (LABEL_EN_MAYUS -> value 'H'/'M')
+  Map<String, dynamic> _normalizeOptionsForVoice(dynamic rawOptions) {
+    List<String>? optionsForVoice;
+    final Map<String, String> labelToValue = {};
+
+    //? 1) Base: soporta List<Map{label,value}> y List<String>
+    if (rawOptions is List<Map<String, String>>) {
+      optionsForVoice = [];
+      for (final m in rawOptions) {
+        final label = (m['label'] ?? '').trim();
+        final value = (m['value'] ?? '').trim();
+        if (label.isNotEmpty) {
+          optionsForVoice.add(label);
+          labelToValue[label.toUpperCase()] = value;
+        }
+      }
+    } else if (rawOptions is List<dynamic>) {
+      final first = rawOptions.isNotEmpty ? rawOptions.first : null;
+      if (first is Map) {
+        optionsForVoice = [];
+        for (final e in rawOptions) {
+          final label = (e['label']?.toString() ?? '').trim();
+          final value = (e['value']?.toString() ?? '').trim();
+          if (label.isNotEmpty) {
+            optionsForVoice.add(label);
+            labelToValue[label.toUpperCase()] = value;
+          }
+        }
+      } else if (first is String) {
+        optionsForVoice = rawOptions.cast<String>();
+      } else {
+        optionsForVoice = null;
+      }
+    } else if (rawOptions is List<String>) {
+      optionsForVoice = rawOptions;
+    } else {
+      optionsForVoice = null;
+    }
+
+    //? 2) Expansión: añade sinónimos desde voiceCorrections -> 'H' o 'M'
+    if (optionsForVoice != null && optionsForVoice.isNotEmpty) {
+      final bool isSexo =
+          labelToValue.values.any((v) => v.toUpperCase() == 'H' || v.toUpperCase() == 'M');
+
+      if (isSexo) {
+        CitizenOptions.voiceCorrections.forEach((k, v) {
+          final val = v.trim().toUpperCase();
+          if (val == 'H' || val == 'M') {
+            final aliasLabel = _toTitleCase(k.trim());
+            final aliasKey = aliasLabel.toUpperCase();
+            if (!labelToValue.containsKey(aliasKey)) {
+              labelToValue[aliasKey] = val;           
+              optionsForVoice!.add(aliasLabel);       
+            }
+          }
+        });
+      }
+    }
+
+    return {
+      'optionsForVoice': optionsForVoice,
+      'labelToValue': labelToValue,
+    };
+  }
+
+  String _toTitleCase(String input) {
+    if (input.isEmpty) return input;
+    return input.split(RegExp(r'\s+')).map((w) {
+      if (w.isEmpty) return w;
+      final lower = w.toLowerCase();
+      return lower[0].toUpperCase() + lower.substring(1);
+    }).join(' ');
+  }
+
   //? ===== Procesamiento de respuestas =====
 
   void _processAnswer() {
@@ -290,23 +398,53 @@ class CitizenVoiceController extends ChangeNotifier {
     }
 
     final currentQ = _questions[_currentQuestion];
+
+    //* Normaliza opciones (acepta List<String> o List<Map{label,value}>)
+    final normalized = _normalizeOptionsForVoice(currentQ['options']);
+    final List<String>? optionsForVoice = normalized['optionsForVoice'] as List<String>?;
+    final Map<String, String> labelToValue = normalized['labelToValue'] as Map<String, String>;
+
     final result = CitizenVoiceUtils.processVoiceInput(
       transcribedText: _transcribedText,
       fieldType: currentQ['field'],
-      options: currentQ['options'],
+      options: optionsForVoice,
       allowSkip: currentQ['skipOption'] ?? false,
       validator: currentQ['validator'],
     );
 
     switch (result.status) {
       case CitizenVoiceProcessStatus.success:
-        _formData[currentQ['field']] = result.value!;
+        var outValue = result.value!;
+
+        //* Si el campo es CURP, limpia/normaliza a A-Z0-9 y mayúsculas,
+        //* y valida estrictamente ANTES de guardar.
+        if ((currentQ['field'] as String) == 'curp_ciudadano') {
+          final clean = outValue.toString().replaceAll(RegExp(r'[^A-Z0-9]'), '').toUpperCase();
+          if (clean != 'OMITIR' && !_isValidCurpStrict(clean)) {
+            //! Seguridad extra por si llegó por validator externo
+            speak('La CURP no es válida. Por favor, repítela.');
+            //! No avanzamos, re-escuchamos
+            _processingAnswer = false;
+            startListening(append: false);
+            return;
+          }
+          outValue = clean; //* guarda la CURP limpia en el form
+        }
+
+        //* Mapeo label->value (ej. “Caballero”->“H”)
+        if (labelToValue.isNotEmpty) {
+          final mapped = labelToValue[outValue.toString().toUpperCase()];
+          if (mapped != null && mapped.isNotEmpty) {
+            outValue = mapped;
+          }
+        }
+
+        _formData[currentQ['field']] = outValue;
         _safeNotify();
         _nextQuestion();
         break;
 
       case CitizenVoiceProcessStatus.skipped:
-        //* FIX: marca explícitamente el campo como omitido para que getNextQuestionIndex() avance
         _formData[currentQ['field']] = 'OMITIR';
         _safeNotify();
         _nextQuestion();

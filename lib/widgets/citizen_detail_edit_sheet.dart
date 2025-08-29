@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_atencion_ciudadana/controllers/citizen_home_controller.dart';
 
-/// Formatter para forzar MAYÚSCULAS al teclear
+///* Formatter para forzar MAYÚSCULAS al teclear
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -20,7 +20,7 @@ class UpperCaseTextFormatter extends TextInputFormatter {
   }
 }
 
-/// Formulario unificado para editar ciudadanos
+///* Formulario unificado para editar ciudadanos
 class CitizenDetailEditSheet extends StatefulWidget {
   final Map<String, dynamic> citizen;
   final Color primaryColor;
@@ -38,7 +38,7 @@ class CitizenDetailEditSheet extends StatefulWidget {
   @override
   State<CitizenDetailEditSheet> createState() => _CitizenDetailEditSheetState();
 
-  /// Método estático para mostrar el componente
+  ///* Método estático para mostrar el componente
   static Future<String?> showSheet({
     required BuildContext context,
     required Map<String, dynamic> citizen,
@@ -68,7 +68,7 @@ class _CitizenDetailEditSheetState extends State<CitizenDetailEditSheet> with Si
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
-  // Controllers para los campos de texto
+  //* Controllers para los campos de texto
   late final TextEditingController nameCtrl;
   late final TextEditingController pApeCtrl;
   late final TextEditingController sApeCtrl;  
@@ -481,7 +481,7 @@ class _CitizenDetailEditSheetState extends State<CitizenDetailEditSheet> with Si
         ),
         _buildEditField(
           controller: emailCtrl,
-          label: 'Correo Electrónico (Opcional)',
+          label: 'Correo Electrónico',
           icon: Icons.email,
           keyboardType: TextInputType.emailAddress,
           validator: (v) {
@@ -661,11 +661,11 @@ class _CitizenDetailEditSheetState extends State<CitizenDetailEditSheet> with Si
                 style: TextStyle(
                   color: widget.primaryColor,
                   fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                  fontSize: 14,
                 ),
               ),
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: widget.primaryColor.withOpacity(0.5), width: 2),
+                side: BorderSide(color: widget.primaryColor.withOpacity(0.5), width: 2.5),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
@@ -678,8 +678,8 @@ class _CitizenDetailEditSheetState extends State<CitizenDetailEditSheet> with Si
               onPressed: isSaving ? null : _saveChanges,
               icon: isSaving
                   ? SizedBox(
-                      width: 20,
-                      height: 20,
+                      width: 18,
+                      height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -690,7 +690,7 @@ class _CitizenDetailEditSheetState extends State<CitizenDetailEditSheet> with Si
                 isSaving ? 'Guardando...' : 'Guardar Cambios',
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
-                  fontSize: 16,
+                  fontSize: 14,
                 ),
               ),
               style: ElevatedButton.styleFrom(

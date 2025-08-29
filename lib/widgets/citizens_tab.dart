@@ -1,9 +1,11 @@
 // lib/widgets/citizens_tab.dart
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:app_atencion_ciudadana/controllers/citizen_home_controller.dart';
 import 'package:app_atencion_ciudadana/widgets/citizen_detail_edit_sheet.dart';
+import 'package:app_atencion_ciudadana/widgets/upload_result_dialog.dart';
 
 class CitizensTab extends StatefulWidget {
   final CitizenHomeController controller;
@@ -24,6 +26,12 @@ class CitizensTab extends StatefulWidget {
 class _CitizensTabState extends State<CitizensTab> {
   final TextEditingController _searchController = TextEditingController();
 
+  //* Guard múltiple para prevenir duplicados
+  bool _uploadingTapGuard = false;
+  Timer? _debounceTimer;
+  String? _lastUploadHash; //* Hash de los registros enviados
+  DateTime? _lastUploadTime; //* Timestamp del último envío
+
   static const Color cardBackground = Color(0xFFFFFFFF);
   static const Color textPrimary = Color(0xFF1F2937);
   static const Color textSecondary = Color(0xFF6B7280);
@@ -32,7 +40,61 @@ class _CitizensTabState extends State<CitizensTab> {
   @override
   void dispose() {
     _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
+  }
+
+  //? -------------------------------
+  //? Helpers locales (lógica visual)
+  //? -------------------------------
+
+  bool _hasValidCurp(Map<String, dynamic> c) {
+    final curp = (c['curp_ciudadano']?.toString().trim().toUpperCase() ?? '');
+    if (curp.length != 18) return false;
+    final re = RegExp(r'^[A-Z0-9]{18}$');
+    return re.hasMatch(curp);
+  }
+
+  bool _hasEmail(Map<String, dynamic> c) {
+    final email = (c['email']?.toString().trim() ?? '');
+    return email.isNotEmpty;
+  }
+
+  bool _isReady(Map<String, dynamic> c) => _hasValidCurp(c) && _hasEmail(c);
+
+  int _countReady(Iterable<Map<String, dynamic>> list) =>
+      list.where(_isReady).length;
+
+  String _computeStatus(Map<String, dynamic> c) {
+    if (_isReady(c)) return 'Completo';
+    return 'Incompleto';
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'Completo':
+        return const Color(0xFF10B981); 
+      case 'Incompleto':
+      default:
+        return const Color(0xFFEF4444); 
+    }
+  }
+
+  //* Genera hash único basado en los CURPs que se van a subir
+  String _generateUploadHash(List<Map<String, dynamic>> citizens) {
+    final curps = citizens
+        .where(_isReady)
+        .map((c) => c['curp_ciudadano']?.toString().trim().toUpperCase() ?? '')
+        .toList()
+      ..sort(); //* Ordena para que el hash sea consistente
+    return curps.join('|').hashCode.toString();
+  }
+
+  //! Verifica si es un envío duplicado reciente
+  bool _isDuplicateRecentUpload(String currentHash) {
+    if (_lastUploadHash == null || _lastUploadTime == null) return false;
+    final timeDiff = DateTime.now().difference(_lastUploadTime!);
+    return _lastUploadHash == currentHash && timeDiff.inSeconds < 10;
   }
 
   @override
@@ -75,41 +137,49 @@ class _CitizensTabState extends State<CitizensTab> {
   }
 
   Widget _buildUploadButton() {
-    final canUpload = widget.controller.citizensWithCurp > 0 && !widget.controller.isUploading;
+    final readyCount = _countReady(widget.controller.filteredCitizens);
+    final canUpload = readyCount > 0 &&
+        !widget.controller.isUploading &&
+        !_uploadingTapGuard;
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [widget.primaryColor, widget.accentColor]),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: widget.primaryColor.withOpacity(0.3),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: canUpload ? widget.controller.uploadCitizensJson : null,
+    return Tooltip(
+      message: 'Subir ciudadanos con CURP válida y email',
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: canUpload
+              ? LinearGradient(colors: [widget.primaryColor, widget.accentColor])
+              : LinearGradient(colors: [Colors.grey.shade400, Colors.grey.shade500]),
           borderRadius: BorderRadius.circular(8),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.cloud_upload_rounded, color: Colors.white, size: 14),
-                const SizedBox(width: 4),
-                Text(
-                  'Subir ${widget.controller.citizensWithCurp}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
+          boxShadow: [
+            BoxShadow(
+              color: (canUpload ? widget.primaryColor : Colors.grey).withOpacity(0.3),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: canUpload ? _handleUploadWithConfirmation : null,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.cloud_upload_rounded, color: Colors.white, size: 14),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Subir $readyCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -117,8 +187,95 @@ class _CitizensTabState extends State<CitizensTab> {
     );
   }
 
+  //? Maneja la subida con protección múltiple contra duplicados
+  Future<void> _handleUploadWithConfirmation() async {
+    //? Guard 1: Verificar si ya está en proceso de subida
+    if (_uploadingTapGuard || widget.controller.isUploading) return;
+
+    final citizensToUpload =
+        widget.controller.filteredCitizens.where(_isReady).toList();
+
+    if (citizensToUpload.isEmpty) {
+      _showSnackBar(
+        'No hay ciudadanos con CURP válida y email para subir',
+        Colors.orange,
+      );
+      return;
+    }
+
+    //? Guard 2: Verificar hash de duplicados recientes
+    final uploadHash = _generateUploadHash(citizensToUpload);
+    if (_isDuplicateRecentUpload(uploadHash)) {
+      _showSnackBar(
+        'Ya se está procesando esta misma selección de registros',
+        Colors.orange,
+      );
+      return;
+    }
+
+    //? Guard 3: ACTIVAR INMEDIATAMENTE (antes del debounce)
+    _uploadingTapGuard = true;
+    _lastUploadHash = uploadHash;
+    _lastUploadTime = DateTime.now();
+
+    //! Debounce corto para evitar doble disparo por rebotes de UI
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 200), () async {
+      await _executeUpload(citizensToUpload, uploadHash);
+    });
+  }
+
+  Future<void> _executeUpload(
+    List<Map<String, dynamic>> citizensToUpload,
+    String uploadHash,
+  ) async {
+    //* Verificación final
+    if (widget.controller.isUploading) return;
+
+    try {
+      final result = await widget.controller.uploadCitizensJson(
+        citizensToUpload: citizensToUpload,
+        idempotencyKey: uploadHash, 
+      );
+
+      if (mounted && result != null) {
+        UploadResultDialog.show(
+          context: context,
+          result: result,
+          primaryColor: widget.primaryColor,
+          onConfirm: () => widget.controller.loadCitizens(),
+        );
+      } else if (mounted) {
+        _showSnackBar('Error inesperado al subir ciudadanos', Colors.red);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Error al subir ciudadanos: $e', Colors.red);
+      }
+    } finally {
+      //* Soltar el guard con un pequeño delay para evitar re-tap inmediato
+      Timer(const Duration(seconds: 2), () {
+        _uploadingTapGuard = false;
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
+  void _showSnackBar(String message, Color backgroundColor) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   Widget _buildStatsCard() {
     final genderStats = widget.controller.getGenderStats();
+    final readyGlobal = _countReady(widget.controller.citizens);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -160,8 +317,8 @@ class _CitizensTabState extends State<CitizensTab> {
                   ),
                 ],
               ),
-              if (widget.controller.citizensWithCurp > 0)
-                widget.controller.isUploading
+              if (readyGlobal > 0)
+                widget.controller.isUploading || _uploadingTapGuard
                     ? Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -184,16 +341,16 @@ class _CitizensTabState extends State<CitizensTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem('Total', widget.controller.totalCitizens.toString(),
+              _buildStatItem('Total', widget.controller.totalCitizens,
                   widget.primaryColor, Icons.person_rounded),
               Container(width: 1, height: 40, color: borderColor),
-              _buildStatItem('Con CURP', widget.controller.citizensWithCurp.toString(),
+              _buildStatItem('Con CURP', widget.controller.citizensWithCurp,
                   const Color(0xFF10B981), Icons.verified_user_rounded),
               Container(width: 1, height: 40, color: borderColor),
-              _buildStatItem('Hombres', genderStats['masculino'].toString(),
+              _buildStatItem('Hombres', genderStats['masculino'] ?? 0,
                   const Color(0xFF3B82F6), Icons.male_rounded),
               Container(width: 1, height: 40, color: borderColor),
-              _buildStatItem('Mujeres', genderStats['femenino'].toString(),
+              _buildStatItem('Mujeres', genderStats['femenino'] ?? 0,
                   const Color(0xFFEC4899), Icons.female_rounded),
             ],
           ),
@@ -202,35 +359,32 @@ class _CitizensTabState extends State<CitizensTab> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color color, IconData icon) {
+  Widget _buildStatItem(String label, int count, Color color, IconData icon) {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(6),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: color, size: 14),
+          child: Icon(icon, color: color, size: 16),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
-          value,
+          count.toString(),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: color,
           ),
         ),
-        const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 10,
-            color: textSecondary,
-            fontWeight: FontWeight.w500,
+            color: Colors.grey.shade600,
           ),
-          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -387,8 +541,8 @@ class _CitizensTabState extends State<CitizensTab> {
   }
 
   Widget _buildCitizenCard(Map<String, dynamic> citizen) {
-    final status = widget.controller.getCitizenStatus(citizen);
-    final statusColor = widget.controller.getCitizenStatusColor(citizen);
+    final status = _computeStatus(citizen);
+    final statusColor = _statusColor(status);
     final curp = citizen['curp_ciudadano']?.toString() ?? '';
     final nombreCompleto = citizen['nombre_completo']?.toString() ?? '';
     final telefono = citizen['telefono']?.toString() ?? '';
@@ -429,7 +583,7 @@ class _CitizensTabState extends State<CitizensTab> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
-                    curp.isNotEmpty && curp.length == 18
+                    _hasValidCurp(citizen)
                         ? Icons.verified_user_rounded
                         : Icons.person_rounded,
                     color: widget.primaryColor,
@@ -677,11 +831,12 @@ class _CitizensTabState extends State<CitizensTab> {
         accentColor: widget.accentColor,
         controller: widget.controller,
       );
-      
+
       if (mounted && result == 'updated') {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ciudadano actualizado correctamente'),
-          backgroundColor: Colors.green,
+          const SnackBar(
+            content: Text('Ciudadano actualizado correctamente'),
+            backgroundColor: Colors.green,
           ),
         );
         setState(() {});

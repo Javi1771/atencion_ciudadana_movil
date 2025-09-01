@@ -134,7 +134,7 @@ void initState() {
                   left: 0,
                   right: 0,
                   child: CurvedHeader(
-                    title: 'Asistente de Voz',
+                    title: 'Registro de Incidencias',
                     height: headerHeight,
                     fontSize: isSmallScreen ? 18 : 20,
                   ),

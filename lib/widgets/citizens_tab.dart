@@ -345,7 +345,7 @@ class _CitizensTabState extends State<CitizensTab> {
                   widget.primaryColor, Icons.person_rounded),
               Container(width: 1, height: 40, color: borderColor),
               _buildStatItem('Con CURP', widget.controller.citizensWithCurp,
-                  const Color(0xFF10B981), Icons.verified_user_rounded),
+                  const Color.fromARGB(255, 126, 16, 185), Icons.task),
               Container(width: 1, height: 40, color: borderColor),
               _buildStatItem('Hombres', genderStats['masculino'] ?? 0,
                   const Color(0xFF3B82F6), Icons.male_rounded),

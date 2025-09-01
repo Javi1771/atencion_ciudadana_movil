@@ -106,11 +106,11 @@ class _IncidencesTabState extends State<IncidencesTab> {
                       color: widget.primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(Icons.analytics_rounded, color: widget.primaryColor, size: 18),
+                    child: Icon(Icons.poll, color: widget.primaryColor, size: 18),
                   ),
                   const SizedBox(width: 10),
                   const Text(
-                    'Resumen de Registros',
+                    'Incidencias Registradas',
                     style: TextStyle(
                       fontSize: 16,
                       color: textPrimary,

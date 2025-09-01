@@ -50,7 +50,7 @@ class CitizenQuestions {
       {
         'field': 'curp_ciudadano',
         'question':
-            'Si conoce su CURP, por favor dígala letra por letra y número por número. Si no la conoce, puede decir "omitir".',
+          'Para comenzar, por favor dígame su CURP completa, puede pausar entre cada letra y número. Si no la conoce, diga "OMITIR".',
         'options': null,
         'skipOption': true,
         'validator': CurpValidator.validate,
@@ -209,14 +209,22 @@ class CitizenQuestions {
         'options': null,
         'skipOption': false,
         'validator': (String value) {
-          //! Sin espacios (en todo el string, no solo al inicio/fin)
-          final noSpaces = value.replaceAll(RegExp(r'\s+'), '');
-          if (noSpaces.length < 8) {
-            return 'La contraseña debe tener al menos 8 caracteres (sin espacios)';
+          // Validamos usando la contraseña SIN espacios
+          final cleaned = value.replaceAll(RegExp(r'\s+'), '');
+
+          if (cleaned.length < 8) {
+            return 'La contraseña debe tener al menos 8 caracteres';
           }
-          if (noSpaces != value) {
-            return 'La contraseña no debe contener espacios';
+
+          // Recomendado: exigir combinación de tipos
+          final hasLetter = RegExp(r'[A-Za-z]').hasMatch(cleaned);
+          final hasDigit  = RegExp(r'\d').hasMatch(cleaned);
+          final hasSymbol = RegExp(r'[^A-Za-z0-9]').hasMatch(cleaned);
+
+          if (!(hasLetter && hasDigit && hasSymbol)) {
+            return 'Incluya letras, números y un símbolo';
           }
+
           return null;
         },
         'isConditional': false,

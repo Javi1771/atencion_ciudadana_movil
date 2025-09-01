@@ -57,7 +57,7 @@ class IncidenceFormScreen extends StatelessWidget {
               left: 0,
               right: 0,
               child: CurvedHeader(
-                title: 'Registro de Incidencia',
+                title: 'Menú de Registro',
                 height: 200,
                 fontSize: 22,
               ),
